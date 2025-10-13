@@ -26,14 +26,14 @@ class AuthNotifier extends StateNotifier<bool> {
     }
   }
 
-  // Future<void> loginWithGoogle() async {
-  //   try {
-  //     await SupabaseService.signInWithGoogle();
-  //     state = true;
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
+  Future<void> loginWithGoogle() async {
+    try {
+      await SupabaseService.signInWithGoogle(); // await only, no return
+      state = true;
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<void> resetPassword(String email) async {
     try {
@@ -43,7 +43,7 @@ class AuthNotifier extends StateNotifier<bool> {
     }
   }
 
-  Future<void> logout() async {   // <-- Change void to Future<void>
+  Future<void> logout() async {
     await SupabaseService.signOut();
     state = false;
   }

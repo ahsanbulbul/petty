@@ -6,6 +6,7 @@ import '../widgets/custom_button.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +18,22 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for OAuth redirect after Google login
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final session = data.session;
+      if (session != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +79,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     : CustomButton(
                         text: "Login",
                         onPressed: () async {
-                          await ref
-                              .read(authProvider.notifier)
-                              .login(emailController.text.trim(), passwordController.text.trim());
+                          await ref.read(authProvider.notifier).login(
+                              emailController.text.trim(),
+                              passwordController.text.trim());
                           if (ref.read(authProvider)) {
                             Navigator.pushReplacement(
                               context,
@@ -74,18 +91,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         },
                       ),
                 const SizedBox(height: 10),
-                // CustomButton(
-                //   text: "Sign in with Google",
-                //   onPressed: () async {
-                //     await ref.read(authProvider.notifier).loginWithGoogle();
-                //     if (ref.read(authProvider)) {
-                //       Navigator.pushReplacement(
-                //         context,
-                //         MaterialPageRoute(builder: (_) => const HomeScreen()),
-                //       );
-                //     }
-                //   },
-                // ),
+                CustomButton(
+  text: "Sign in with Google",
+  onPressed: () async {
+    try {
+      await ref.read(authProvider.notifier).loginWithGoogle();
+      // No need to navigate manually; onAuthStateChange will handle it
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Google sign-in failed: $e")),
+      );
+    }
+  },
+),
+
                 const SizedBox(height: 15),
                 TextButton(
                   onPressed: () {
