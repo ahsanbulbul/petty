@@ -8,27 +8,34 @@ final authProvider = StateNotifierProvider<AuthNotifier, bool>((ref) {
 class AuthNotifier extends StateNotifier<bool> {
   AuthNotifier() : super(SupabaseService.currentUser != null);
 
-  Future<void> login(String email, String password) async {
+  // UPDATED: return bool
+  Future<bool> login(String email, String password) async {
     try {
       await SupabaseService.signIn(email, password);
       state = true;
+      return true; // login succeeded
     } catch (e) {
-      rethrow;
+      state = false;
+      return false; // login failed
     }
   }
 
-  Future<void> signup(String email, String password) async {
+  // UPDATED: return bool
+  Future<bool> signup(String email, String password) async {
     try {
       await SupabaseService.signUp(email, password);
       state = true;
+      return true;
     } catch (e) {
-      rethrow;
+      state = false;
+      return false;
     }
   }
 
+  // loginWithGoogle can remain void, since we handle navigation via onAuthStateChange
   Future<void> loginWithGoogle() async {
     try {
-      await SupabaseService.signInWithGoogle(); // await only, no return
+      await SupabaseService.signInWithGoogle();
       state = true;
     } catch (e) {
       rethrow;

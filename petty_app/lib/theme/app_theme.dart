@@ -2,34 +2,64 @@ import 'package:flutter/material.dart';
 
 final lightTheme = ThemeData(
   brightness: Brightness.light,
-  primarySwatch: Colors.teal,
-  scaffoldBackgroundColor: Colors.white,
+  primaryColor: Colors.green[600],
+  scaffoldBackgroundColor: Colors.green[50],
+  appBarTheme: AppBarTheme(
+    backgroundColor: Colors.green[600],
+    foregroundColor: Colors.white,
+  ),
   inputDecorationTheme: InputDecorationTheme(
-    border: OutlineInputBorder(),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     filled: true,
-    fillColor: Colors.grey[200],
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+    hintStyle: TextStyle(color: Colors.grey[700]), // hint color
+  ),
+  textTheme: const TextTheme(
+    bodyMedium: TextStyle(color: Colors.black), // ensures text inside TextField is visible
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.teal,
+      backgroundColor: Colors.green[600],
+      foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      padding: const EdgeInsets.symmetric(vertical: 15),
     ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(foregroundColor: Colors.green[700]),
   ),
 );
 
 final darkTheme = ThemeData(
   brightness: Brightness.dark,
-  primarySwatch: Colors.teal,
-  scaffoldBackgroundColor: Colors.black,
+  primaryColor: Colors.green[400],
+  scaffoldBackgroundColor: Colors.grey[900],
+  appBarTheme: AppBarTheme(
+    backgroundColor: Colors.green[700],
+    foregroundColor: Colors.white,
+  ),
   inputDecorationTheme: InputDecorationTheme(
-    border: OutlineInputBorder(),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     filled: true,
     fillColor: Colors.grey[800],
+    contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+    hintStyle: TextStyle(color: Colors.grey[400]),
+  ),
+  textTheme: const TextTheme(
+    bodyMedium: TextStyle(color: Colors.white),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.tealAccent,
+      backgroundColor: Colors.green[400],
+      foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      padding: const EdgeInsets.symmetric(vertical: 15),
     ),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(foregroundColor: Colors.greenAccent),
   ),
 );

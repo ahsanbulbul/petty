@@ -18,14 +18,15 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           // Theme toggle button
           IconButton(
-            icon: Icon(
-              themeMode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
-            ),
-            onPressed: () {
-              ref.read(themeProvider.notifier).state =
-                  themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-            },
-          ),
+  icon: Icon(
+    themeMode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
+    color: themeMode == ThemeMode.light ? Colors.white : Colors.greenAccent,
+  ),
+  onPressed: () {
+    ref.read(themeProvider.notifier).state =
+        themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+  },
+),
           // Logout button
           IconButton(
             icon: const Icon(Icons.logout),
