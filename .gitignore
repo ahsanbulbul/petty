@@ -32,3 +32,6 @@ petty_app/macos/Flutter/GeneratedPluginRegistrant.swift
 petty_app/linux/flutter/generated_plugins.cmake
 *.h
 petty_app/linux/flutter/generated_plugin_registrant.h
+**/.venv
+**/models_cache
+**/*.jpg
