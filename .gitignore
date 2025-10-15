@@ -11,3 +11,5 @@
 # Flutter generated plugin registrant files
 **/generated_plugin_registrant.*
 **/ephemeral/
+petty_app/.flutter-plugins
+petty_app/lib/core/config/env.dart
