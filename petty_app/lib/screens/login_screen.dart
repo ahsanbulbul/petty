@@ -7,9 +7,7 @@ import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
 import 'forgot_password_screen.dart';
- // ✅ new OTP screen import
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,12 +27,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
 
+    // Panda reacts to password focus
     _passwordFocus.addListener(() {
       final panda = _pandaKey.currentState;
       if (panda == null || !panda.isReady) return;
       panda.handsUp(_passwordFocus.hasFocus);
     });
 
+    // Panda reacts to email typing
     emailController.addListener(() {
       final panda = _pandaKey.currentState;
       if (panda == null || !panda.isReady) return;
@@ -48,7 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!_emailFocus.hasFocus) panda.stopChecking();
     });
 
-    // ✅ Auth listener (auto redirects after login or recovery)
+    // Supabase auth listener
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
       if (session != null && mounted) {
@@ -121,7 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       LoginPandaAnimation(key: _pandaKey),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 70),
                       SizedBox(
                         width: textFieldWidth,
                         child: CustomTextField(
@@ -144,8 +144,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          // ✅ Go to OTP password reset flow
                           onPressed: () {
+                            // Open password reset flow
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -161,7 +161,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
 
-              // Buttons at bottom
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -174,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             text: "Login",
                             onPressed: _login,
                           ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 1),
                     IconButton(
                       onPressed: () async {
                         try {
@@ -190,12 +189,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         }
                       },
                       icon: Image.asset(
-                        'assets/icons/google.png',
-                        height: 28,
-                        width: 28,
+                        'assets/images/google.png',
+                        height: 32,
+                        width: 32,
                       ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 1),
                     TextButton(
                       onPressed: () {
                         Navigator.push(

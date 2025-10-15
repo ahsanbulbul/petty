@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:app_links/app_links.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String accessToken;
@@ -19,25 +18,6 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final passwordController = TextEditingController();
   bool isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initAppLinks();
-  }
-
-  void _initAppLinks() async {
-    final appLinks = AppLinks();
-    try {
-      final initialUri = await appLinks.getInitialAppLink();
-      if (initialUri != null && initialUri.queryParameters.containsKey('access_token')) {
-        // You can extract token if needed
-        debugPrint('Initial access token: ${initialUri.queryParameters['access_token']}');
-      }
-    } catch (e) {
-      debugPrint('Failed to get initial app link: $e');
-    }
-  }
 
   Future<void> _updatePassword() async {
     final newPassword = passwordController.text.trim();
@@ -59,7 +39,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
       if (res.user != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Password updated successfully")),
+          const SnackBar(content: Text("Password updated successfully!")),
         );
         widget.onPasswordUpdated();
       } else {

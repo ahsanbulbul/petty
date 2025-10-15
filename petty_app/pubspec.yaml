@@ -27,6 +27,7 @@ flutter:
     - assets/images/chatlogo.jpg
     - assets/rive/bunny_animation.riv
     - assets/rive/panda_2_animation.riv
+    - assets/images/google.png
 dependency_overrides:
   sign_in_with_apple: 7.0.1
   sign_in_with_apple_platform_interface: 2.0.0

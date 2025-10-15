@@ -51,13 +51,13 @@ class LoginPandaAnimationState extends State<LoginPandaAnimation> {
 
    return Container(
   width: double.infinity,
-  height: 250,
+  height: 240,
   decoration: BoxDecoration(
     color: bgColor,
     borderRadius: BorderRadius.circular(16),
   ),
   child: Transform.translate(
-    offset: const Offset(0, 30), // move panda 30 pixels down
+    offset: const Offset(0, 80), // move panda 30 pixels down
     child: ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: RiveAnimation.asset(
