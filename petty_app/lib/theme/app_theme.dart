@@ -13,10 +13,10 @@ final lightTheme = ThemeData(
     filled: true,
     fillColor: Colors.white,
     contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-    hintStyle: TextStyle(color: Colors.grey[700]), // hint color
+    hintStyle: TextStyle(color: Colors.grey[700]),
   ),
   textTheme: const TextTheme(
-    bodyMedium: TextStyle(color: Colors.black), // ensures text inside TextField is visible
+    bodyMedium: TextStyle(color: Colors.black),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
@@ -24,7 +24,8 @@ final lightTheme = ThemeData(
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 25), // added horizontal padding
+      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
@@ -56,7 +57,8 @@ final darkTheme = ThemeData(
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
     ),
   ),
   textButtonTheme: TextButtonThemeData(

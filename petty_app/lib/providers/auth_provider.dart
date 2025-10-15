@@ -10,15 +10,16 @@ class AuthNotifier extends StateNotifier<bool> {
 
   // UPDATED: return bool
   Future<bool> login(String email, String password) async {
-    try {
-      await SupabaseService.signIn(email, password);
-      state = true;
-      return true; // login succeeded
-    } catch (e) {
-      state = false;
-      return false; // login failed
-    }
+  try {
+    await SupabaseService.signIn(email, password);
+    state = true;
+    return true;
+  } catch (e) {
+    state = false;
+    return false;
   }
+}
+
 
   // UPDATED: return bool
   Future<bool> signup(String email, String password) async {

@@ -13,6 +13,7 @@ dependencies:
   supabase_flutter: ^1.5.0
   google_fonts: ^4.0.4
   shared_preferences: ^2.1.1
+  app_links: ^3.5.1
 
 dev_dependencies:
   flutter_test:
@@ -25,7 +26,7 @@ flutter:
     - assets/rive/login_animation.riv
     - assets/images/chatlogo.jpg
     - assets/rive/bunny_animation.riv
-    - assets/rive/panda_animation.riv
+    - assets/rive/panda_2_animation.riv
 dependency_overrides:
   sign_in_with_apple: 7.0.1
   sign_in_with_apple_platform_interface: 2.0.0
