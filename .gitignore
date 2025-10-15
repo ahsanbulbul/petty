@@ -13,3 +13,13 @@
 **/ephemeral/
 petty_app/.flutter-plugins
 petty_app/lib/core/config/env.dart
+*.cc
+*.cc
+*.h
+*.cmake
+*.swift
+petty_app/windows/flutter/generated_plugin_registrant.cc
+petty_app/windows/flutter/generated_plugin_registrant.h
+petty_app/windows/flutter/generated_plugins.cmake
+*.cc
+petty_app/linux/flutter/generated_plugin_registrant.cc
