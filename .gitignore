@@ -1,0 +1,13 @@
+/.vscode
+*.cc
+*.cc
+*.h
+*.swift
+*.cmake
+*.cc
+
+
+
+# Flutter generated plugin registrant files
+**/generated_plugin_registrant.*
+**/ephemeral/
