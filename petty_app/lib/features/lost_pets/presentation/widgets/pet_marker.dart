@@ -6,7 +6,7 @@ class PetMarker extends Marker {
   PetMarker({
     required LatLng point,
     required bool isLost,
-    required String petName,
+  required String title,
     required VoidCallback onTap,
   }) : super(
           point: point,
@@ -31,7 +31,7 @@ class PetMarker extends Marker {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      petName,
+                      title,
                       style: TextStyle(
                         fontSize: 10,
                         color: isLost ? Colors.red : Colors.green,

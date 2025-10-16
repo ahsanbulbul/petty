@@ -4,10 +4,12 @@ import 'dart:convert';
 
 class PetPing {
   final String id;
-  final String petName;
+  final String title; // Renamed from petName
   final String petType;
   final String description;
   final LatLng location;
+  final String? area; // UI only, not stored in DB
+  final String? gender; // male/female
   final DateTime timestamp;
   final bool isLost; // true for lost, false for found
   final List<Uint8List>? images;
@@ -15,10 +17,12 @@ class PetPing {
 
   PetPing({
     required this.id,
-    required this.petName,
+    required this.title,
     required this.petType,
     required this.description,
     required this.location,
+    this.area,
+    this.gender,
     required this.timestamp,
     required this.isLost,
     this.images,
@@ -29,13 +33,14 @@ class PetPing {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'petName': petName,
+      'title': title,
       'petType': petType,
       'description': description,
       'location': {
         'latitude': location.latitude,
         'longitude': location.longitude,
       },
+      'gender': gender,
       'timestamp': timestamp.toIso8601String(),
       'isLost': isLost,
       // Convert images to base64 for storage
@@ -102,11 +107,9 @@ class PetPing {
 
   factory PetPing.fromJson(Map<String, dynamic> json) {
     print('Processing JSON: $json');
-    
     // Handle Supabase PostGIS point format
     LatLng location;
     var locationData = json['location'];
-    
     try {
       if (locationData is String) {
         print('Raw JSON for location: $locationData');
@@ -146,23 +149,28 @@ class PetPing {
       print('Error parsing location: $e');
       rethrow;
     }
-    
+
+    // Area is a UI-only field, not stored in DB, so we try to get it from JSON if present, else null
+    String? area = json['area'];
+    String? gender = json['gender'];
 
     return PetPing(
       id: json['id'] ?? '',
-      petName: json['pet_name'] ?? json['petName'],
+      title: json['title'] ?? json['petName'] ?? json['pet_name'],
       petType: json['pet_type'] ?? json['petType'],
       description: json['description'],
       location: location,
+      area: area,
+      gender: gender,
       timestamp: DateTime.parse(json['ping_timestamp'] ?? json['timestamp'] ?? DateTime.now().toIso8601String()),
       isLost: json['is_lost'] ?? json['isLost'],
-    images: json['images'] != null
-      ? List<Uint8List>.from(
-          (json['images'] as List).map((img) => _parseImageData(img)).where((img) => img != null)
-        )
-      : json['image_data'] != null  // For backward compatibility
-          ? [_parseImageData(json['image_data'])!].where((img) => img != null).toList()
-          : null,
+      images: json['images'] != null
+        ? List<Uint8List>.from(
+            (json['images'] as List).map((img) => _parseImageData(img)).where((img) => img != null)
+          )
+    : json['image_data'] != null  // For backward compatibility
+      ? [_parseImageData(json['image_data'])!]
+      : null,
       contactInfo: json['contact_info'] ?? json['contactInfo'],
     );
   }
@@ -170,10 +178,12 @@ class PetPing {
   // Copy with method for creating copies with some changes
   PetPing copyWith({
     String? id,
-    String? petName,
+    String? title,
     String? petType,
     String? description,
     LatLng? location,
+    String? area,
+    String? gender,
     DateTime? timestamp,
     bool? isLost,
     List<Uint8List>? images,
@@ -181,10 +191,12 @@ class PetPing {
   }) {
     return PetPing(
       id: id ?? this.id,
-      petName: petName ?? this.petName,
+      title: title ?? this.title,
       petType: petType ?? this.petType,
       description: description ?? this.description,
       location: location ?? this.location,
+      area: area ?? this.area,
+      gender: gender ?? this.gender,
       timestamp: timestamp ?? this.timestamp,
       isLost: isLost ?? this.isLost,
       images: images ?? this.images,

@@ -112,7 +112,7 @@ class PetDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(pet.petName),
+        title: Text(pet.title),
         backgroundColor: pet.isLost ? Colors.red.shade100 : Colors.green.shade100,
       ),
       body: SingleChildScrollView(
@@ -164,6 +164,15 @@ class PetDetailScreen extends StatelessWidget {
                     pet.petType,
                     Icons.pets,
                   ),
+                  if (pet.gender != null && pet.gender!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildInfoSection(
+                      context,
+                      'Gender',
+                      pet.gender![0].toUpperCase() + pet.gender!.substring(1),
+                      Icons.transgender,
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   _buildInfoSection(
                     context,

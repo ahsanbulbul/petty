@@ -117,11 +117,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                     ),
                   for (final ping in nearbyPings)
-                    PetMarker(
-                      point: ping.location,
-                      isLost: ping.isLost,
-                      petName: ping.petName,
-                      onTap: () => _showPetDetails(context, ping),
+                      PetMarker(
+                        point: ping.location,
+                        isLost: ping.isLost,
+                        title: ping.title,
+                        onTap: () => _showPetDetails(context, ping),
                     ),
                 ],
               ),
@@ -211,8 +211,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      ping.petName,
+                        child: Text(
+                          ping.title,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),

@@ -14,8 +14,9 @@ class SupabasePetPingRepository implements PetPingRepository {
     try {
       // Prepare data for insertion
       final data = {
-        'pet_name': ping.petName,
-        'pet_type': ping.petType,
+  'title': ping.title,
+  'pet_type': ping.petType,
+  'gender': ping.gender,
         'description': ping.description,
         'location': 'SRID=4326;POINT(${ping.location.longitude} ${ping.location.latitude})',
         'is_lost': ping.isLost,
@@ -159,8 +160,9 @@ class SupabasePetPingRepository implements PetPingRepository {
     final response = await _client
         .from('pet_pings')
         .update({
-          'pet_name': ping.petName,
+          'title': ping.title,
           'pet_type': ping.petType,
+          'gender': ping.gender,
           'description': ping.description,
           'location': 'SRID=4326;POINT(${ping.location.longitude} ${ping.location.latitude})',
           'is_lost': ping.isLost,
