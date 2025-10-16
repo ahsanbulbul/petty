@@ -97,7 +97,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 setState(() {
                   currentLocation = point;
                 });
-                _loadLostPets();
               },
             ),
             children: [
