@@ -1,5 +1,6 @@
 import 'package:latlong2/latlong.dart';
 import 'dart:typed_data';
+import 'dart:convert';
 
 class PetPing {
   final String id;
@@ -37,7 +38,8 @@ class PetPing {
       },
       'timestamp': timestamp.toIso8601String(),
       'isLost': isLost,
-      'image_data': imageData?.toList(), // Convert Uint8List to regular List<int> for proper serialization
+      // Store image as base64 string
+      'image_data': imageData != null ? base64Encode(imageData!) : null,
       'contactInfo': contactInfo,
     };
   }
@@ -53,75 +55,21 @@ class PetPing {
     return bytes[0];
   }
 
-  static List<int> _parseImageData(dynamic imageData) {
-    if (imageData == null) return [];
-    
-    print('Raw image data type: ${imageData.runtimeType}');
-    String sample = imageData.toString();
-    if (sample.length > 100) {
-      sample = '${sample.substring(0, 50)}...${sample.substring(sample.length - 50)}';
-    }
-    print('Raw image data sample: $sample');
-    
-    if (imageData is List) {
-      print('Image data is already a List');
-      return List<int>.from(imageData);
-    }
-    
+  static Uint8List _parseImageData(dynamic imageData) {
+    if (imageData == null) return Uint8List(0);
+    if (imageData is Uint8List) return imageData;
+    if (imageData is List<int>) return Uint8List.fromList(imageData);
     if (imageData is String) {
-      // Handle PostgreSQL bytea format
-      if (imageData.startsWith('\\x')) {
-        print('Parsing PostgreSQL bytea format');
-        String hex = imageData.substring(2);
-        List<int> bytes = [];
-        for (int i = 0; i < hex.length; i += 2) {
-          if (i + 2 <= hex.length) {
-            String pair = hex.substring(i, i + 2);
-            try {
-              bytes.add(int.parse(pair, radix: 16));
-            } catch (e) {
-              print('Error parsing hex byte: $pair');
-            }
-          }
-        }
-        print('First few bytes from bytea: ${bytes.take(10).map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' ')}');
-        return bytes;
-      }
-      
-      // Handle array string format [137,80,78,71,...]
-      if (imageData.startsWith('[') && imageData.endsWith(']')) {
-        print('Parsing array string format');
-        try {
-          var bytes = imageData
-            .substring(1, imageData.length - 1)
-            .split(',')
-            .map((s) => int.parse(s.trim()))
-            .toList();
-          print('First few bytes from array: ${bytes.take(10).map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' ')}');
-          return bytes;
-        } catch (e) {
-          print('Error parsing array string: $e');
-        }
-      }
-      
-      // Try parsing as comma-separated values without brackets
-      if (imageData.contains(',')) {
-        print('Trying to parse as comma-separated values');
-        try {
-          var bytes = imageData
-            .split(',')
-            .map((s) => int.parse(s.trim()))
-            .toList();
-          print('First few bytes from CSV: ${bytes.take(10).map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' ')}');
-          return bytes;
-        } catch (e) {
-          print('Error parsing CSV: $e');
-        }
+      try {
+        // Assume base64 string
+        return base64Decode(imageData);
+      } catch (e) {
+        print('Error decoding base64 image: $e');
+        return Uint8List(0);
       }
     }
-    
     print('Unhandled image data format');
-    return [];
+    return Uint8List(0);
   }
 
   factory PetPing.fromJson(Map<String, dynamic> json) {
@@ -180,9 +128,9 @@ class PetPing {
       location: location,
       timestamp: DateTime.parse(json['ping_timestamp'] ?? json['timestamp'] ?? DateTime.now().toIso8601String()),
       isLost: json['is_lost'] ?? json['isLost'],
-      imageData: json['image_data'] != null 
-          ? Uint8List.fromList(_parseImageData(json['image_data']))
-          : null,
+    imageData: json['image_data'] != null 
+      ? _parseImageData(json['image_data'])
+      : null,
       contactInfo: json['contact_info'] ?? json['contactInfo'],
     );
   }

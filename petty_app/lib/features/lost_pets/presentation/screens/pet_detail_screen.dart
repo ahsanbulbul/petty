@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/pet_ping.dart';
 import 'package:intl/intl.dart';
+import 'dart:typed_data';
 
 class PetDetailScreen extends StatelessWidget {
   final PetPing pet;
@@ -29,32 +30,53 @@ class PetDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.grey[200],
               ),
-              child: pet.imageData != null
-                ? Hero(
-                    tag: 'pet_image_${pet.id}',
-                    child: Image.memory(
-                      pet.imageData!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        print('Error loading image: $error');
-                        print('Stack trace: $stackTrace');
-                        return const Center(
-                          child: Icon(
-                            Icons.error_outline,
-                            size: 50,
-                            color: Colors.red,
-                          ),
-                        );
+                child: pet.imageData != null && pet.imageData!.isNotEmpty
+                  ? Builder(
+                      builder: (context) {
+                        Uint8List? uint8list;
+                        try {
+                          // If imageData is a string like '[137,80,78,...]', parse it
+                          if (pet.imageData is String) {
+                            final str = pet.imageData as String;
+                            final bytes = str
+                                .replaceAll('[', '')
+                                .replaceAll(']', '')
+                                .split(',')
+                                .map((e) => int.tryParse(e.trim()))
+                                .whereType<int>()
+                                .toList();
+                            uint8list = Uint8List.fromList(bytes);
+                          } else if (pet.imageData is Uint8List) {
+                            uint8list = pet.imageData as Uint8List;
+                          } else if (pet.imageData is List<int>) {
+                            uint8list = Uint8List.fromList(pet.imageData as List<int>);
+                          }
+                        } catch (_) {
+                          uint8list = null;
+                        }
+                        if (uint8list != null && uint8list.isNotEmpty) {
+                          return Image.memory(
+                            uint8list,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: 200,
+                          );
+                        } else {
+                          return Container(
+                            width: double.infinity,
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.pets, size: 100, color: Colors.grey),
+                          );
+                        }
                       },
+                    )
+                  : Container(
+                      width: double.infinity,
+                      height: 200,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.pets, size: 100, color: Colors.grey),
                     ),
-                  )
-                : const Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      size: 50,
-                      color: Colors.grey,
-                    ),
-                  ),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
