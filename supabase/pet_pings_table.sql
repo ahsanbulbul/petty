@@ -4,14 +4,15 @@ create extension if not exists postgis;
 -- Create pet_pings table
 create table if not exists pet_pings (
   id uuid default gen_random_uuid() primary key,
-  pet_name text not null,
+  title text not null,
   pet_type text not null,
+  gender text null,
   description text not null,
   location geography(Point) not null,
   timestamp timestamptz not null default now(),
   is_lost boolean not null,
-  image_data text, -- Changed from bytea to text for base64 storage
-  contact_info text,
+  images text[],
+  contact_info text not null,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
