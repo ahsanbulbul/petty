@@ -24,7 +24,8 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
   
   List<PetPing> _nearbyPings = [];
   String? _error;
-  bool _isLoading = false;
+  bool _isAddingPing = false;
+  bool _isRefreshingNearbyPings = false;
   List<Uint8List> _selectedImages = [];
   final _imagePicker = ImagePicker();
 
@@ -80,7 +81,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
     }
 
     setState(() {
-      _isLoading = true;
+      _isAddingPing = true;
       _error = null;
     });
 
@@ -133,14 +134,14 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
       });
     } finally {
       setState(() {
-        _isLoading = false;
+        _isAddingPing = false;
       });
     }
   }
 
   Future<void> _loadNearbyPings() async {
     setState(() {
-      _isLoading = true;
+      _isRefreshingNearbyPings = true;
       _error = null;
     });
 
@@ -162,7 +163,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isRefreshingNearbyPings = false;
         });
       }
     }
@@ -241,7 +242,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _pickImage,
+                  onPressed: (_isAddingPing || _isRefreshingNearbyPings) ? null : _pickImage,
                   icon: const Icon(Icons.photo_camera),
                   label: const Text('Add Photos'),
                 ),
@@ -300,15 +301,15 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _isLoading ? null : _addNewPing,
-              child: _isLoading
+              onPressed: _isAddingPing ? null : _addNewPing,
+              child: _isAddingPing
                   ? const CircularProgressIndicator()
                   : const Text('Add Pet Ping'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _isLoading ? null : _loadNearbyPings,
-              child: _isLoading
+              onPressed: _isRefreshingNearbyPings ? null : _loadNearbyPings,
+              child: _isRefreshingNearbyPings
                   ? const CircularProgressIndicator()
                   : const Text('Refresh Nearby Pings'),
             ),
