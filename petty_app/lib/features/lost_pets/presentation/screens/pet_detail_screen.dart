@@ -2,20 +2,114 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/pet_ping.dart';
 import 'package:intl/intl.dart';
 import 'dart:typed_data';
+import 'dart:convert';
 
 class PetDetailScreen extends StatelessWidget {
   final PetPing pet;
 
   const PetDetailScreen({super.key, required this.pet});
 
+  Widget _buildImage() {
+    // Debug image data
+    if (pet.images != null) {
+      print('PetDetailScreen - Number of images: ${pet.images!.length}');
+      for (var i = 0; i < pet.images!.length; i++) {
+        print('PetDetailScreen - Image $i Length: ${pet.images![i].length}');
+        print('PetDetailScreen - Image $i First few bytes: ${pet.images![i].take(10).toList()}');
+      }
+    }
+
+    if (pet.images != null && pet.images!.isNotEmpty) {
+      return PageView.builder(
+        itemCount: pet.images!.length,
+        itemBuilder: (context, index) {
+          return Stack(
+            children: [
+              Image.memory(
+                pet.images![index],
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 300,
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error displaying image $index: $error');
+                  print('Stack trace: $stackTrace');
+                  return Container(
+                    width: double.infinity,
+                    height: 300,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.broken_image, size: 100, color: Colors.grey),
+                  );
+                },
+              ),
+              if (pet.images!.length > 1)
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${index + 1}/${pet.images!.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      );
+    } else {
+      return Container(
+        width: double.infinity,
+        height: 300,
+        color: Colors.grey[300],
+        child: const Icon(Icons.pets, size: 100, color: Colors.grey),
+      );
+    }
+  }
+
+  Widget _buildInfoSection(
+    BuildContext context,
+    String title,
+    String content,
+    IconData icon,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 20, color: Colors.grey[600]),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.only(left: 28),
+          child: Text(
+            content,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    print('PetDetailScreen - Image Data Length: ${pet.imageData?.length}');
-    print('PetDetailScreen - Has Image: ${pet.imageData != null}');
-    if (pet.imageData != null) {
-      print('First few bytes: ${pet.imageData!.take(10).map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' ')}');
-    }
-    
     return Scaffold(
       appBar: AppBar(
         title: Text(pet.petName),
@@ -30,53 +124,7 @@ class PetDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.grey[200],
               ),
-                child: pet.imageData != null && pet.imageData!.isNotEmpty
-                  ? Builder(
-                      builder: (context) {
-                        Uint8List? uint8list;
-                        try {
-                          // If imageData is a string like '[137,80,78,...]', parse it
-                          if (pet.imageData is String) {
-                            final str = pet.imageData as String;
-                            final bytes = str
-                                .replaceAll('[', '')
-                                .replaceAll(']', '')
-                                .split(',')
-                                .map((e) => int.tryParse(e.trim()))
-                                .whereType<int>()
-                                .toList();
-                            uint8list = Uint8List.fromList(bytes);
-                          } else if (pet.imageData is Uint8List) {
-                            uint8list = pet.imageData as Uint8List;
-                          } else if (pet.imageData is List<int>) {
-                            uint8list = Uint8List.fromList(pet.imageData as List<int>);
-                          }
-                        } catch (_) {
-                          uint8list = null;
-                        }
-                        if (uint8list != null && uint8list.isNotEmpty) {
-                          return Image.memory(
-                            uint8list,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: 200,
-                          );
-                        } else {
-                          return Container(
-                            width: double.infinity,
-                            height: 200,
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.pets, size: 100, color: Colors.grey),
-                          );
-                        }
-                      },
-                    )
-                  : Container(
-                      width: double.infinity,
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.pets, size: 100, color: Colors.grey),
-                    ),
+              child: _buildImage(),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -145,40 +193,6 @@ class PetDetailScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoSection(
-    BuildContext context,
-    String title,
-    String content,
-    IconData icon,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: Colors.grey[600]),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.only(left: 28.0),
-          child: Text(
-            content,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-      ],
     );
   }
 }

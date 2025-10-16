@@ -23,32 +23,35 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
   List<PetPing> _nearbyPings = [];
   String? _error;
   bool _isLoading = false;
-  Uint8List? _selectedImage;
+  List<Uint8List> _selectedImages = [];
   final _imagePicker = ImagePicker();
 
   Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
+      final List<XFile> pickedFiles = await _imagePicker.pickMultiImage(
         maxWidth: 800, // Reduced size
         maxHeight: 800, // Reduced size
         imageQuality: 70, // Lower quality for smaller file size
       );
       
-      if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        if (bytes.length > 1024 * 1024) { // Check if larger than 1MB
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image is too large. Please choose a smaller image.')),
-          );
-          return;
+      if (pickedFiles.isNotEmpty) {
+        for (var file in pickedFiles) {
+          final bytes = await file.readAsBytes();
+          if (bytes.length > 1024 * 1024) { // Check if larger than 1MB
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Image ${file.name} is too large. Skipping...')),
+            );
+            continue;
+          }
+          setState(() {
+            _selectedImages.add(bytes);
+          });
         }
-        setState(() => _selectedImage = bytes);
       }
     } catch (e) {
-      print('Error picking image: $e');
+      print('Error picking images: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
+        SnackBar(content: Text('Error picking images: $e')),
       );
     }
   }
@@ -88,7 +91,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
         location: location,
         timestamp: DateTime.now(),
         isLost: true,
-        imageData: _selectedImage,
+        images: _selectedImages.isNotEmpty ? _selectedImages : null,
         contactInfo: _contactInfoController.text.isNotEmpty ? _contactInfoController.text : null,
       );
 
@@ -108,7 +111,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
         _petTypeController.clear();
         _descriptionController.clear();
         _contactInfoController.clear();
-        _selectedImage = null;
+        _selectedImages.clear();
       });
 
       // Refresh nearby pings
@@ -138,17 +141,23 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
       final location = await _locationService.getCurrentLocation();
       final pings = await ref.read(petPingRepositoryProvider).getNearbyPings(location);
       
-      setState(() {
-        _nearbyPings = pings;
-      });
+      if (mounted) {
+        setState(() {
+          _nearbyPings = pings;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = 'Error loading nearby pings: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Error loading nearby pings: $e';
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -193,32 +202,65 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
             ),
             const SizedBox(height: 16),
             // Image picker section
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _isLoading ? null : _pickImage,
-                        icon: const Icon(Icons.photo_camera),
-                        label: const Text('Add Photo'),
-                      ),
-                      if (_selectedImage != null) ...[
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.memory(
-                            _selectedImage!,
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _pickImage,
+                  icon: const Icon(Icons.photo_camera),
+                  label: const Text('Add Photos'),
                 ),
+                if (_selectedImages.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 150,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _selectedImages.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  _selectedImages[index],
+                                  height: 150,
+                                  width: 150,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedImages.removeAt(index);
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -273,6 +315,30 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
                         color: ping.isLost ? Colors.red : Colors.green,
                       ),
                     ),
+                    if (ping.images?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: ping.images!.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  ping.images![index],
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

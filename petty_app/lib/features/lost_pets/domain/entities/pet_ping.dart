@@ -10,7 +10,7 @@ class PetPing {
   final LatLng location;
   final DateTime timestamp;
   final bool isLost; // true for lost, false for found
-  final Uint8List? imageData;
+  final List<Uint8List>? images;
   final String? contactInfo;
 
   PetPing({
@@ -21,7 +21,7 @@ class PetPing {
     required this.location,
     required this.timestamp,
     required this.isLost,
-    this.imageData,
+    this.images,
     this.contactInfo,
   });
 
@@ -38,38 +38,66 @@ class PetPing {
       },
       'timestamp': timestamp.toIso8601String(),
       'isLost': isLost,
-      // Store image as base64 string
-      'image_data': imageData != null ? base64Encode(imageData!) : null,
+      // Convert images to base64 for storage
+      'images': images?.map((img) => base64Encode(img)).toList(),
       'contactInfo': contactInfo,
     };
   }
 
   // Simple fromJson factory constructor
   // Helper method to convert hex string to double
-  static double _hexToDouble(String hex) {
-    // Convert hex string to int first
-    int bits = int.parse(hex, radix: 16);
-    // Use Float64List to convert bits to double
-    var bytes = Float64List(1);
-    bytes[0] = bits.toDouble();
-    return bytes[0];
-  }
-
-  static Uint8List _parseImageData(dynamic imageData) {
-    if (imageData == null) return Uint8List(0);
-    if (imageData is Uint8List) return imageData;
-    if (imageData is List<int>) return Uint8List.fromList(imageData);
+  static Uint8List? _parseImageData(dynamic imageData) {
+    if (imageData == null) return null;
+    print('Parsing image data of type: ${imageData.runtimeType}');
+    
     if (imageData is String) {
       try {
-        // Assume base64 string
-        return base64Decode(imageData);
+        print('Processing string input, length: ${imageData.length}');
+        
+        // Check if it starts with a PNG signature ([137, 80, 78, 71...])
+        if (imageData.startsWith('[137')) {
+          try {
+            // Parse the raw bytes directly from the string representation
+            final rawBytes = Uint8List.fromList(
+              imageData.substring(1, imageData.length - 1) // Remove brackets
+                .split(',')
+                .map((s) => int.parse(s.trim()))
+                .toList()
+            );
+            print('Parsed raw PNG bytes, length: ${rawBytes.length}');
+            return rawBytes;
+          } catch (e) {
+            print('Error parsing raw PNG bytes: $e');
+            return null;
+          }
+        }
+        
+        // Try base64 parsing
+        var cleanBase64 = imageData.replaceAll(RegExp(r'[^A-Za-z0-9+/=]'), '');
+        if (cleanBase64.isEmpty) return null;
+        
+        // Add padding if needed
+        final padding = cleanBase64.length % 4;
+        if (padding > 0) {
+          cleanBase64 = cleanBase64.padRight(cleanBase64.length + (4 - padding), '=');
+        }
+        
+        try {
+          final bytes = base64Decode(cleanBase64);
+          print('Decoded base64 to Uint8List, length: ${bytes.length}');
+          return bytes;
+        } catch (e) {
+          print('Base64 decode failed: $e');
+          return null;
+        }
       } catch (e) {
-        print('Error decoding base64 image: $e');
-        return Uint8List(0);
+        print('Error parsing image data: $e');
+        return null;
       }
+    } else {
+      print('Unexpected image data type: ${imageData.runtimeType}');
+      return null;
     }
-    print('Unhandled image data format');
-    return Uint8List(0);
   }
 
   factory PetPing.fromJson(Map<String, dynamic> json) {
@@ -128,9 +156,13 @@ class PetPing {
       location: location,
       timestamp: DateTime.parse(json['ping_timestamp'] ?? json['timestamp'] ?? DateTime.now().toIso8601String()),
       isLost: json['is_lost'] ?? json['isLost'],
-    imageData: json['image_data'] != null 
-      ? _parseImageData(json['image_data'])
-      : null,
+    images: json['images'] != null
+      ? List<Uint8List>.from(
+          (json['images'] as List).map((img) => _parseImageData(img)).where((img) => img != null)
+        )
+      : json['image_data'] != null  // For backward compatibility
+          ? [_parseImageData(json['image_data'])!].where((img) => img != null).toList()
+          : null,
       contactInfo: json['contact_info'] ?? json['contactInfo'],
     );
   }
@@ -144,7 +176,7 @@ class PetPing {
     LatLng? location,
     DateTime? timestamp,
     bool? isLost,
-    Uint8List? imageData,
+    List<Uint8List>? images,
     String? contactInfo,
   }) {
     return PetPing(
@@ -155,7 +187,7 @@ class PetPing {
       location: location ?? this.location,
       timestamp: timestamp ?? this.timestamp,
       isLost: isLost ?? this.isLost,
-      imageData: imageData ?? this.imageData,
+      images: images ?? this.images,
       contactInfo: contactInfo ?? this.contactInfo,
     );
   }

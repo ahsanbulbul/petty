@@ -1,12 +1,15 @@
--- Function to find nearby pings with formatted location
-drop function if exists find_nearby_pings(double precision, double precision, double precision);
+-- Update pet_pings table to use images array instead of image_data
+ALTER TABLE pet_pings 
+  DROP COLUMN IF EXISTS image_data,
+  ADD COLUMN IF NOT EXISTS images text[];
 
-create or replace function find_nearby_pings(
+-- Migrate any existing function that uses image_data
+CREATE OR REPLACE FUNCTION find_nearby_pings(
   search_lat double precision,
   search_lng double precision,
   search_radius double precision default 5000
 )
-returns table (
+RETURNS TABLE (
   id uuid,
   pet_name text,
   pet_type text,
@@ -14,16 +17,17 @@ returns table (
   location text,
   "timestamp" timestamptz,
   is_lost boolean,
-  image_data text,
+  images text[],
   contact_info text,
   created_at timestamptz,
   updated_at timestamptz,
-  distance float)
-language plpgsql
-as $$
-begin
-  return query
-  select 
+  distance float
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
     p.id,
     p.pet_name,
     p.pet_type,
@@ -31,7 +35,7 @@ begin
     ST_AsEWKT(p.location) as location,
     p.timestamp,
     p.is_lost,
-    p.image_data,
+    p.images,
     p.contact_info,
     p.created_at,
     p.updated_at,
@@ -39,12 +43,12 @@ begin
       p.location::geography,
       ST_SetSRID(ST_MakePoint(search_lng, search_lat), 4326)::geography
     ) as distance
-  from pet_pings p
-  where ST_DWithin(
+  FROM pet_pings p
+  WHERE ST_DWithin(
     p.location::geography,
     ST_SetSRID(ST_MakePoint(search_lng, search_lat), 4326)::geography,
     search_radius
   )
-  order by distance;
-end;
+  ORDER BY distance;
+END;
 $$;

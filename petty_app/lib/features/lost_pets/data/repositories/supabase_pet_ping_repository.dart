@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/pet_ping.dart';
@@ -18,17 +19,24 @@ class SupabasePetPingRepository implements PetPingRepository {
         'description': ping.description,
         'location': 'SRID=4326;POINT(${ping.location.longitude} ${ping.location.latitude})',
         'is_lost': ping.isLost,
-        'image_data': ping.imageData?.toList(), // Convert to List<int> for proper serialization
+        'images': ping.images?.map((img) => base64Encode(img)).toList(),
         'contact_info': ping.contactInfo,
         'timestamp': ping.timestamp.toIso8601String(),
       };
 
       print('Inserting data: $data');
 
+      if (data['images'] != null) {
+        print('Images present: ${(data['images'] as List).length} images');
+      }
+      
       final List<dynamic> response = await _client
           .from('pet_pings')
           .insert(data)
           .select();
+          
+      print('Response from insert: ${response.first}');
+      print('Response from insert: $response');
 
       print('Insert response: $response');
 
@@ -57,11 +65,35 @@ class SupabasePetPingRepository implements PetPingRepository {
 
       print('Got response from getAllLostPets: $response');
 
-      return response
-          .map((json) => PetPing.fromJson(Map<String, dynamic>.from(json)))
-          .toList();
+      return response.map((json) {
+        // Convert response to Map<String, dynamic>
+        final Map<String, dynamic> data = Map<String, dynamic>.from(json);
+        
+        // Handle the transition period where we might get either images or image_data
+        if (data['image_data'] != null && !data.containsKey('images')) {
+          data['images'] = [data['image_data']];
+          data.remove('image_data');
+        }
+        
+        return PetPing.fromJson(data);
+      }).toList();
     } catch (e) {
       print('Error getting lost pets: $e');
+      if (e.toString().contains('column p.image_data does not exist')) {
+        // If the error is about the missing column, try to fetch with a simpler query
+        try {
+          final response = await _client
+              .from('pet_pings')
+              .select()
+              .eq('is_lost', true)
+              .order('timestamp', ascending: false);
+          
+          return response.map((json) => PetPing.fromJson(json)).toList();
+        } catch (fallbackError) {
+          print('Fallback query also failed: $fallbackError');
+          return [];
+        }
+      }
       return [];
     }
   }
@@ -77,11 +109,35 @@ class SupabasePetPingRepository implements PetPingRepository {
             'search_radius': radiusMeters
           });
 
-      return response
-          .map((json) => PetPing.fromJson(Map<String, dynamic>.from(json)))
-          .toList();
+      return response.map((json) {
+        final Map<String, dynamic> data = Map<String, dynamic>.from(json);
+        
+        // Handle the transition period where we might get either images or image_data
+        if (data['image_data'] != null && !data.containsKey('images')) {
+          data['images'] = [data['image_data']];
+          data.remove('image_data');
+        }
+        
+        return PetPing.fromJson(data);
+      }).toList();
     } catch (e) {
       print('Error getting nearby pings: $e');
+      if (e.toString().contains('column p.image_data does not exist')) {
+        // If the error is about the missing column, try to fetch with a simpler query
+        try {
+          final response = await _client
+              .from('pet_pings')
+              .select()
+              .not('location', 'is', null) // Ensure location exists
+              .order('created_at', ascending: false)
+              .order('timestamp', ascending: false);
+          
+          return response.map((json) => PetPing.fromJson(json)).toList();
+        } catch (fallbackError) {
+          print('Fallback query also failed: $fallbackError');
+          return [];
+        }
+      }
       return [];
     }
   }
@@ -108,7 +164,7 @@ class SupabasePetPingRepository implements PetPingRepository {
           'description': ping.description,
           'location': 'SRID=4326;POINT(${ping.location.longitude} ${ping.location.latitude})',
           'is_lost': ping.isLost,
-          'image_data': ping.imageData,
+          'images': ping.images?.map((img) => base64Encode(img)).toList(),
           'contact_info': ping.contactInfo,
         })
         .eq('id', ping.id)

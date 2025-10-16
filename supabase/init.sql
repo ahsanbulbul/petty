@@ -10,7 +10,7 @@ create table if not exists pet_pings (
   location geography(Point) not null,
   timestamp timestamptz not null default now(),
   is_lost boolean not null,
-  image_data bytea,
+  image_data text, -- Changed from bytea to text for base64 storage
   contact_info text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
