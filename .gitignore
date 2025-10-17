@@ -35,3 +35,4 @@ petty_app/linux/flutter/generated_plugin_registrant.h
 **/.venv
 **/models_cache
 **/*.jpg
+**/__pycache__
