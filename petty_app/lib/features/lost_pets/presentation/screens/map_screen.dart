@@ -16,11 +16,41 @@ class MapScreen extends ConsumerStatefulWidget {
   ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends ConsumerState<MapScreen> {
+class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateMixin {
+  void _animatedMapMove(LatLng destLocation, double destZoom) {
+    final latTween = Tween<double>(begin: currentLocation?.latitude ?? destLocation.latitude, end: destLocation.latitude);
+    final lngTween = Tween<double>(begin: currentLocation?.longitude ?? destLocation.longitude, end: destLocation.longitude);
+    final zoomTween = Tween<double>(begin: currentZoom, end: destZoom);
+
+    var controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    Animation<double> animation = CurvedAnimation(parent: controller, curve: Curves.easeInOut);
+
+    controller.addListener(() {
+      final lat = latTween.evaluate(animation);
+      final lng = lngTween.evaluate(animation);
+      final zoom = zoomTween.evaluate(animation);
+      _mapController.move(LatLng(lat, lng), zoom);
+    });
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          currentLocation = destLocation;
+          currentZoom = destZoom;
+        });
+        controller.dispose();
+      }
+    });
+    controller.forward();
+  }
+  // ...existing code...
   final MapController _mapController = MapController();
   final LocationService _locationService = LocationService();
   List<PetPing> nearbyPings = [];
   LatLng? currentLocation;
+  double currentZoom = 13.0;
   
   bool _isLoading = false;
 
@@ -87,7 +117,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: currentLocation ?? LatLng(23.8103, 90.4125),
-              initialZoom: 13.0,
+              initialZoom: currentZoom,
               minZoom: 3.0,  // Prevent zooming out too far
               maxZoom: 18.0, // Prevent zooming in too far
               interactionOptions: InteractionOptions(
@@ -133,6 +163,41 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 child: CircularProgressIndicator(),
               ),
             ),
+          Positioned(
+            top: 32,
+            right: 16,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  heroTag: 'zoom_in',
+                  mini: true,
+                  onPressed: () {
+                    setState(() {
+                      if (currentZoom < 18.0) {
+                        currentZoom += 1.0;
+                        _mapController.move(currentLocation ?? LatLng(23.8103, 90.4125), currentZoom);
+                      }
+                    });
+                  },
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'zoom_out',
+                  mini: true,
+                  onPressed: () {
+                    setState(() {
+                      if (currentZoom > 3.0) {
+                        currentZoom -= 1.0;
+                        _mapController.move(currentLocation ?? LatLng(23.8103, 90.4125), currentZoom);
+                      }
+                    });
+                  },
+                  child: const Icon(Icons.remove),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -144,10 +209,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             
             setState(() {
               currentLocation = location;
+              currentZoom = 15.0;
               _isLoading = false;
             });
-            _mapController.move(location, 15.0);
-            await _loadLostPets();
+            _animatedMapMove(location, 15.0);
           } catch (e) {
             if (!mounted) return;
             setState(() => _isLoading = false);
