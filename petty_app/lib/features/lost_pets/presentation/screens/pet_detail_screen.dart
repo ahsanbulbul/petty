@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/pet_ping.dart';
 import 'package:intl/intl.dart';
-import 'dart:typed_data';
-import 'dart:convert';
+import '../widgets/fullscreen_image_viewer.dart';
 
 class PetDetailScreen extends StatelessWidget {
   final PetPing pet;
@@ -15,7 +14,9 @@ class PetDetailScreen extends StatelessWidget {
       print('PetDetailScreen - Number of images: ${pet.images!.length}');
       for (var i = 0; i < pet.images!.length; i++) {
         print('PetDetailScreen - Image $i Length: ${pet.images![i].length}');
-        print('PetDetailScreen - Image $i First few bytes: ${pet.images![i].take(10).toList()}');
+        print(
+          'PetDetailScreen - Image $i First few bytes: ${pet.images![i].take(10).toList()}',
+        );
       }
     }
 
@@ -25,28 +26,48 @@ class PetDetailScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           return Stack(
             children: [
-              Image.memory(
-                pet.images![index],
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: 300,
-                errorBuilder: (context, error, stackTrace) {
-                  print('Error displaying image $index: $error');
-                  print('Stack trace: $stackTrace');
-                  return Container(
-                    width: double.infinity,
-                    height: 300,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.broken_image, size: 100, color: Colors.grey),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullscreenImageViewer(
+                        images: pet.images!,
+                        initialIndex: index,
+                      ),
+                    ),
                   );
                 },
+                child: Image.memory(
+                  pet.images![index],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: 300,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('Error displaying image $index: $error');
+                    print('Stack trace: $stackTrace');
+                    return Container(
+                      width: double.infinity,
+                      height: 300,
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.broken_image,
+                        size: 100,
+                        color: Colors.grey,
+                      ),
+                    );
+                  },
+                ),
               ),
               if (pet.images!.length > 1)
                 Positioned(
                   right: 16,
                   bottom: 16,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(20),
@@ -90,19 +111,16 @@ class PetDetailScreen extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Colors.grey[600],
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.only(left: 28),
-          child: Text(
-            content,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(content, style: Theme.of(context).textTheme.bodyMedium),
         ),
       ],
     );
@@ -113,7 +131,9 @@ class PetDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(pet.title),
-        backgroundColor: pet.isLost ? Colors.red.shade100 : Colors.green.shade100,
+        backgroundColor: pet.isLost
+            ? Colors.red.shade100
+            : Colors.green.shade100,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -121,9 +141,7 @@ class PetDetailScreen extends StatelessWidget {
           children: [
             Container(
               height: 300,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-              ),
+              decoration: BoxDecoration(color: Colors.grey[200]),
               child: _buildImage(),
             ),
             Padding(
@@ -152,7 +170,9 @@ class PetDetailScreen extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        DateFormat('MMM d, y \'at\' h:mm a').format(pet.timestamp),
+                        DateFormat(
+                          'MMM d, y \'at\' h:mm a',
+                        ).format(pet.timestamp),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -187,7 +207,8 @@ class PetDetailScreen extends StatelessWidget {
                     'Lat: ${pet.location.latitude.toStringAsFixed(6)}\nLng: ${pet.location.longitude.toStringAsFixed(6)}',
                     Icons.location_on,
                   ),
-                  if (pet.contactInfo != null && pet.contactInfo!.isNotEmpty) ...[
+                  if (pet.contactInfo != null &&
+                      pet.contactInfo!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildInfoSection(
                       context,
