@@ -42,7 +42,8 @@ class LocationService {
 
       return LatLng(position.latitude, position.longitude);
     } catch (e) {
-      throw Exception('Failed to get current location: \${e.toString()}');
+      // ✅ fixed string interpolation here
+      throw Exception('Failed to get current location: ${e.toString()}');
     }
   }
 }

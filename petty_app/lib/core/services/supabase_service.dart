@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:url_launcher/url_launcher.dart';
 import '../config/env.dart';
 
 class SupabaseService {
@@ -26,13 +28,19 @@ class SupabaseService {
     return await client.auth.signInWithPassword(email: email, password: password);
   }
 
-  /// Google Sign-In for Flutter Web
+  /// Google Sign-In (Web + Android)
   static Future<void> signInWithGoogle() async {
-    await client.auth.signInWithOAuth(
-      Provider.google,
-      redirectTo: 'io.supabase.flutter://login-callback',
-      // For web, Supabase handles redirect automatically
-    );
+    if (kIsWeb) {
+      // Web flow (Supabase handles redirect automatically)
+      await client.auth.signInWithOAuth(Provider.google);
+    } else {
+      // Android flow (deep link redirect)
+      await client.auth.signInWithOAuth(
+        Provider.google,
+        redirectTo: 'io.supabase.flutter://login-callback', // must match AndroidManifest
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+    }
   }
 
   /// Reset password

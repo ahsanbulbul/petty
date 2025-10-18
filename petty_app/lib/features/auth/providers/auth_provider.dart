@@ -8,47 +8,59 @@ final authProvider = StateNotifierProvider<AuthNotifier, bool>((ref) {
 class AuthNotifier extends StateNotifier<bool> {
   AuthNotifier() : super(SupabaseService.currentUser != null);
 
-  // UPDATED: return bool
   Future<bool> login(String email, String password) async {
-  try {
-    await SupabaseService.signIn(email, password);
-    state = true;
-    return true;
-  } catch (e) {
-    state = false;
-    return false;
-  }
-}
-
-
-  // UPDATED: return bool
-  Future<bool> signup(String email, String password) async {
     try {
-      await SupabaseService.signUp(email, password);
-      state = true;
-      return true;
+      final response = await SupabaseService.signIn(email, password);
+      if (response.session != null && response.user != null) {
+        state = true;
+        return true;
+      } else {
+        state = false;
+        return false;
+      }
     } catch (e) {
+      print('Login error: $e');
       state = false;
       return false;
     }
   }
 
-  // loginWithGoogle can remain void, since we handle navigation via onAuthStateChange
+  Future<bool> signup(String email, String password) async {
+    try {
+      final response = await SupabaseService.signUp(email, password);
+      if (response.user != null) {
+        if (response.session == null) {
+          print('Signup successful - Email confirmation required');
+          state = false;
+          return true;
+        } else {
+          state = true;
+          return true;
+        }
+      } else {
+        state = false;
+        return false;
+      }
+    } catch (e) {
+      print('Signup error: $e');
+      state = false;
+      return false;
+    }
+  }
+
   Future<void> loginWithGoogle() async {
     try {
       await SupabaseService.signInWithGoogle();
       state = true;
     } catch (e) {
+      print("Google login error: $e");
+      state = false;
       rethrow;
     }
   }
 
   Future<void> resetPassword(String email) async {
-    try {
-      await SupabaseService.resetPassword(email);
-    } catch (e) {
-      rethrow;
-    }
+    await SupabaseService.resetPassword(email);
   }
 
   Future<void> logout() async {

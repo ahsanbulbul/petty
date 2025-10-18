@@ -36,3 +36,4 @@ petty_app/linux/flutter/generated_plugin_registrant.h
 **/models_cache
 **/*.jpg
 **/__pycache__
+petty_app/android/app/src/main/AndroidManifest.xml

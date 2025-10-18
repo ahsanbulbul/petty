@@ -8,7 +8,8 @@ import 'signup_screen.dart';
 // import 'home_screen.dart';
 import 'forgot_password_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../lost_pets/presentation/pages/home_page.dart';
+import '/features/auth/screens/home_screen.dart';
+
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -55,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (session != null && mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       }
     });
@@ -77,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       } else {
         panda.showFail();
