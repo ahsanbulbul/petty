@@ -5,6 +5,42 @@ import '../../domain/entities/pet_ping.dart';
 import '../../domain/repositories/pet_ping_repository.dart';
 
 class SupabasePetPingRepository implements PetPingRepository {
+
+  // Get all pings posted by a specific user using the join table
+  Future<List<PetPing>> getPingsByUser(String userId) async {
+  final response = await _client
+    .from('user_pet_pings')
+    .select('pet_pings(*)')
+    .eq('user_id', userId);
+  print('user_pet_pings response: $response');
+  // Only map rows where pet_pings is not null, then sort by timestamp descending
+  final List<PetPing> pings = response
+    .where((row) => row['pet_pings'] != null)
+    .map<PetPing>((row) => PetPing.fromJson(row['pet_pings']))
+    .toList();
+  pings.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  return pings;
+  }
+
+  // Delete a ping by id for a user (removes from join table and then from pet_pings)
+  Future<void> deletePing(String pingId, {String? userId}) async {
+    if (userId != null) {
+      // Remove the association first
+      await _client.from('user_pet_pings').delete().eq('user_id', userId).eq('pet_ping_id', pingId);
+    }
+    // Optionally, also delete the ping itself (if you want to fully remove it)
+    await _client.from('pet_pings').delete().eq('id', pingId);
+  }
+
+  // Add a new pet ping and bind to user
+  Future<PetPing> addPetPingForUser(PetPing ping, String userId) async {
+    final newPing = await addPetPing(ping);
+    await _client.from('user_pet_pings').insert({
+      'user_id': userId,
+      'pet_ping_id': newPing.id,
+    });
+    return newPing;
+  }
   final SupabaseClient _client;
   
   SupabasePetPingRepository(this._client);

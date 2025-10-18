@@ -9,6 +9,7 @@ import '../../domain/entities/pet_ping.dart';
 import '../../data/repositories/supabase_pet_ping_repository.dart';
 import '../widgets/pet_marker.dart';
 import '../providers/pet_filter_provider.dart';
+import '../providers/pings_refresh_provider.dart';
 import '../widgets/pet_filter_sheet.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -64,6 +65,17 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
     // Delay loading pings until after the build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadLostPets();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Listen for refresh trigger changes and reload lost pets when it updates
+    // Use addPostFrameCallback to avoid calling setState during build
+    final container = ProviderScope.containerOf(context);
+    container.listen<int>(pingsRefreshProvider, (previous, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadLostPets());
     });
   }
 

@@ -2,6 +2,8 @@ import 'package:latlong2/latlong.dart';
 import '../entities/pet_ping.dart';
 
 abstract class PetPingRepository {
+  /// Add a new pet ping and bind to user
+  Future<PetPing> addPetPingForUser(PetPing ping, String userId);
   /// Add a new pet ping
   Future<PetPing> addPetPing(PetPing ping);
 

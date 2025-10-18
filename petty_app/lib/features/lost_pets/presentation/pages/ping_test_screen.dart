@@ -1,3 +1,4 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -107,8 +108,11 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
       );
 
       try {
+        final supabase = Supabase.instance.client;
+        final user = supabase.auth.currentUser;
+        if (user == null) throw Exception('Not logged in');
         print('Attempting to add ping: ${newPing.toJson()}');
-        final addedPing = await ref.read(petPingRepositoryProvider).addPetPing(newPing);
+        final addedPing = await ref.read(petPingRepositoryProvider).addPetPingForUser(newPing, user.id);
         print('Successfully added ping: ${addedPing.toJson()}');
       } catch (e, stackTrace) {
         print('Error adding ping: $e');

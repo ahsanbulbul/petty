@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/map_screen.dart';
 import 'ping_test_screen.dart';
+import '../screens/my_pings_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,6 +16,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _screens = [
     const PingTestScreen(),
     const MapScreen(),
+    const MyPingsScreen(),
   ];
 
   @override
@@ -36,6 +38,10 @@ class _HomePageState extends State<HomePage> {
           NavigationDestination(
             icon: Icon(Icons.map),
             label: 'Map',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.pets),
+            label: 'My Pings',
           ),
         ],
       ),
