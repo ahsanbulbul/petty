@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'theme/app_theme.dart';
-import 'screens/login_screen.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'core/theme/app_theme.dart';
 
+// ThemeMode provider
 final themeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
 class PettyApp extends ConsumerWidget {
@@ -11,6 +12,7 @@ class PettyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Petty - Pet App',
