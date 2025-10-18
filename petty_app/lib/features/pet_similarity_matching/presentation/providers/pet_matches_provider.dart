@@ -17,8 +17,13 @@ final petMatchesProvider = FutureProvider<List<PetMatch>>((ref) async {
       throw Exception('Matching service is not available');
     }
     
-    // For now returning empty list since we'll implement actual fetch in next iteration
-    return [];
+    print('Checking for matches...');
+    
+    // Get matches for lost and found pets
+    final userMatches = await repository.getCurrentUserMatches();
+    print('User matches fetched: ${userMatches.length}');
+    
+    return userMatches;
   } catch (e) {
     throw Exception('Failed to load matches: $e');
   }

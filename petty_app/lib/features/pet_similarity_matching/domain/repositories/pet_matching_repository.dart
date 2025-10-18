@@ -7,4 +7,5 @@ abstract class PetMatchingRepository {
   Future<bool> markLostPetAsSolved(String id);
   Future<bool> markFoundPetAsSolved(String id);
   Future<bool> checkApiHealth();
+  Future<List<PetMatch>> getCurrentUserMatches();
 }
