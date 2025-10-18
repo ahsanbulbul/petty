@@ -500,7 +500,7 @@ if __name__ == "__main__":
     print(f"  Visual weight: {config.WEIGHT_VISUAL * 100:.1f}%")
     print(f"  Location weight: {config.WEIGHT_LOCATION * 100:.1f}%")
     print(f"  Time weight: {config.WEIGHT_TIME * 100:.1f}%")
-    print(f"  Metadata weight: {config.WEIGHT_METADATA * 100:.1f}%")
+    print(f"  Gender weight: {config.WEIGHT_GENDER * 100:.1f}%")
     print(f"\n  High confidence threshold: {config.CONFIDENCE_HIGH:.1f}%")
     print(f"  Medium confidence threshold: {config.CONFIDENCE_MEDIUM:.1f}%")
     print(f"  Low confidence threshold: {config.CONFIDENCE_LOW:.1f}%")
