@@ -1,73 +1,113 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rive/rive.dart';
-import '../providers/auth_provider.dart';
-import 'login_screen.dart';
-import '/app.dart'; // for themeProvider
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class HomeScreen extends ConsumerWidget {
+// Lost & Found feature
+import '../../lost_pets/presentation/pages/home_page.dart';
+
+// Pet Adoption feature
+import '../../pet_adoption/presentation/pages/pet_adoption_menu_page.dart';
+
+// Auth
+import 'login_screen.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeProvider);
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  // Drawer items
+  final List<Map<String, dynamic>> _pages = [
+    {
+      'title': 'Lost & Found Pets',
+      'widget': const HomePage(),
+      'icon': Icons.search,
+    },
+    {
+      'title': 'Pet Adoption',
+      'widget': const PetAdoptionMenuPage(),
+      'icon': Icons.pets,
+    },
+  ];
+
+  void _logout() async {
+    await Supabase.instance.client.auth.signOut();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final page = _pages[_selectedIndex];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Petty Home'),
+        title: Text(page['title']),
+        backgroundColor: Colors.teal,
         actions: [
-          // Theme toggle button
-          IconButton(
-  icon: Icon(
-    themeMode == ThemeMode.light ? Icons.dark_mode : Icons.light_mode,
-    color: themeMode == ThemeMode.light ? Colors.white : Colors.greenAccent,
-  ),
-  onPressed: () {
-    ref.read(themeProvider.notifier).state =
-        themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-  },
-),
-          // Logout button
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              // Ensure logout returns Future<void>
-              await ref.read(authProvider.notifier).logout();
-              // Navigate to LoginScreen
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              }
-            },
+            onPressed: _logout,
+            tooltip: 'Logout',
           ),
         ],
       ),
-      body: Center(
+      drawer: Drawer(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+          ),
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Welcome to Petty!",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 250,
-              child: RiveAnimation.asset( // <-- remove const
-                'assets/rive/login_animation.riv',
-                fit: BoxFit.contain,
+            const UserAccountsDrawerHeader(
+              accountName: Text('Petty User'),
+              accountEmail: Text('Welcome to Petty!'),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.pets, color: Colors.teal, size: 32),
               ),
+              decoration: BoxDecoration(color: Colors.teal),
             ),
-            const SizedBox(height: 20),
-            const Text(
-              "Your pet companion app is ready!",
-              style: TextStyle(fontSize: 16),
+            ..._pages.asMap().entries.map((entry) {
+              int idx = entry.key;
+              var page = entry.value;
+              return ListTile(
+                leading: Icon(page['icon']),
+                title: Text(page['title']),
+                selected: _selectedIndex == idx,
+                onTap: () {
+                  setState(() => _selectedIndex = idx);
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: _logout,
             ),
           ],
         ),
       ),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Container(
+          key: ValueKey(_selectedIndex),
+          child: page['widget'],
+        ),
+      ),
+      // REMOVED FAB - "Add Pet" is now a tab in PetAdoptionMenuPage
     );
   }
 }
