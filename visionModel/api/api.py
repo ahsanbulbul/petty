@@ -84,14 +84,21 @@ matcher = PetMatcher()
 
 # Pydantic models for request/response
 class PetPostRequest(BaseModel):
-    """Request model for lost/found pet posts"""
+    """
+    Request model for lost/found pet posts
+    
+    Gender Matching Logic:
+    - If both pets have defined gender (male/female) and match: 100% score
+    - If both pets have defined gender but differ: 0% score  
+    - If either pet has gender='unsure' or None: 50% score (neutral, no penalty)
+    """
     id: str = Field(..., description="Unique post ID")
     pet_type: str = Field(..., description="Type of pet: cat, dog, bird, rabbit")
     latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate")
     longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate")
     timestamp: datetime = Field(..., description="When pet was lost/found (ISO format)")
     images: List[str] = Field(..., min_items=1, description="Base64 encoded images")
-    gender: str = Field(..., description="Pet gender: male, female, or unsure")
+    gender: str = Field(..., description="Pet gender: male, female, or unsure (unsure = neutral matching)")
     description: Optional[str] = Field(None, description="Additional details about the pet")
     
     @validator('pet_type')

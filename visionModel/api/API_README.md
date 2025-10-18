@@ -176,6 +176,9 @@ Weighted scoring system:
 - **Location (20%)**: Distance with exponential decay
 - **Time (20%)**: Temporal proximity with exponential decay
 - **Gender (10%)**: Gender matching component
+  - Both genders match: 100% score
+  - Both genders differ: 0% score
+  - Either gender is "unsure" or missing: 50% score (neutral)
 - **Pet Type**: Must match (multiplier 1.0 or 0.0)
 
 ### 3. **Match Categories**
@@ -215,8 +218,9 @@ class PetMatchingConfig:
 ### Request Validation
 - **Pet type**: Must be `cat`, `dog`, `bird`, or `rabbit`
 - **Gender**: Must be `male`, `female`, or `unsure`
+  - Use `unsure` when gender is unknown - treated as neutral (50% match weight)
 - **Coordinates**: Valid latitude (-90 to 90), longitude (-180 to 180)
-- **Images**: At least 1 image, paths must exist
+- **Images**: At least 1 image, must be valid base64 encoded
 - **Timestamp**: ISO 8601 format
 
 ### Error Responses

@@ -302,17 +302,21 @@ class PetMatcher:
         Returns:
             Gender score (0-100)
         """
+        # Normalize gender values - treat 'unsure' as missing/None
+        gender1 = post1.gender.lower() if post1.gender and post1.gender.lower() != 'unsure' else None
+        gender2 = post2.gender.lower() if post2.gender and post2.gender.lower() != 'unsure' else None
+        
         # If both have gender info and they match = 100
         # If both have gender info and mismatch = 0
-        # If either missing gender info = 50 (neutral)
+        # If either missing/unsure = 50 (neutral)
         
-        if post1.gender and post2.gender:
-            if post1.gender.lower() == post2.gender.lower():
+        if gender1 and gender2:
+            if gender1 == gender2:
                 return 100.0  # Perfect match
             else:
                 return 0.0    # Mismatch
         else:
-            return 50.0  # Neutral when info missing
+            return 50.0  # Neutral when info missing or unsure
     
     def match(self, query_post: PetPost, candidate_post: PetPost,
               aggregation: str = 'max') -> MatchResult:
