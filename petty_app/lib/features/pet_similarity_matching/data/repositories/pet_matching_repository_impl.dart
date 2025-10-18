@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:petty_app/core/config/env.dart';
 import '../../../lost_pets/domain/entities/pet_ping.dart';
 import '../../domain/repositories/pet_matching_repository.dart';
 import '../../domain/entities/pet_match.dart';
 
 class PetMatchingRepositoryImpl implements PetMatchingRepository {
-  final String baseUrl = 'https://pet-matching-service.example.com'; // Replace with actual API endpoint
   final http.Client _client;
 
   PetMatchingRepositoryImpl({http.Client? client}) : _client = client ?? http.Client();
@@ -19,8 +19,11 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
           : null;
       
       final response = await _client.post(
-        Uri.parse('$baseUrl/match/lost'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('${Env.matchServiceUrl}/lost'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Env.matchServiceApiKey,
+        },
         body: jsonEncode({
           'id': ping.id,
           'imageData': imageData,
@@ -53,8 +56,11 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
           : null;
           
       final response = await _client.post(
-        Uri.parse('$baseUrl/match/found'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('${Env.matchServiceUrl}/found'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Env.matchServiceApiKey,
+        },
         body: jsonEncode({
           'id': ping.id,
           'imageData': imageData,
@@ -82,8 +88,11 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
   Future<bool> markLostPetAsSolved(String id) async {
     try {
       final response = await _client.post(
-        Uri.parse('$baseUrl/match/lost/$id/solved'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('${Env.matchServiceUrl}/solvedlost/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Env.matchServiceApiKey,
+        },
       );
       return response.statusCode == 200;
     } catch (e) {
@@ -96,8 +105,11 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
   Future<bool> markFoundPetAsSolved(String id) async {
     try {
       final response = await _client.post(
-        Uri.parse('$baseUrl/match/found/$id/solved'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('${Env.matchServiceUrl}/solvedfound/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': Env.matchServiceApiKey,
+        },
       );
       return response.statusCode == 200;
     } catch (e) {
@@ -109,7 +121,12 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
   @override
   Future<bool> checkApiHealth() async {
     try {
-      final response = await _client.get(Uri.parse('$baseUrl/health'));
+      final response = await _client.get(
+        Uri.parse('${Env.matchServiceUrl}/health'),
+        headers: {
+          'X-API-Key': Env.matchServiceApiKey,
+        },
+      );
       return response.statusCode == 200;
     } catch (e) {
       print('Error checking API health: $e');
