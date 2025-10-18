@@ -18,6 +18,36 @@ class PetDetailScreen extends ConsumerStatefulWidget {
 class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   final TextEditingController messageController = TextEditingController();
   bool _loading = false;
+  bool _hasRequestedAdoption = false;
+  String? _myRequestStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingRequest();
+  }
+
+  Future<void> _checkExistingRequest() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final response = await Supabase.instance.client
+          .from('adoption_requests')
+          .select('status')
+          .eq('pet_id', widget.pet.id)
+          .eq('requester_id', userId);
+
+      if (response.isNotEmpty && mounted) {
+        setState(() {
+          _hasRequestedAdoption = true;
+          _myRequestStatus = response.first['status'] as String;
+        });
+      }
+    } catch (e) {
+      print('Error checking existing request: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,8 +213,114 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                     ),
                   ],
                   
-                  // Adoption request section for non-owners
-                  if (!pet.adopted && !isOwner) ...[
+                  // Show "This is your pet" message for owner
+                  if (isOwner && !pet.adopted) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.teal[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.teal[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.teal[700]),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'This is your pet. You will see adoption requests below.',
+                              style: TextStyle(
+                                color: Colors.teal[700],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  
+                  // Show request status if user already requested
+                  if (!pet.adopted && !isOwner && _hasRequestedAdoption) ...[
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _myRequestStatus == 'pending'
+                            ? Colors.orange[50]
+                            : _myRequestStatus == 'approved'
+                                ? Colors.green[50]
+                                : Colors.red[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _myRequestStatus == 'pending'
+                              ? Colors.orange[200]!
+                              : _myRequestStatus == 'approved'
+                                  ? Colors.green[200]!
+                                  : Colors.red[200]!,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _myRequestStatus == 'pending'
+                                ? Icons.schedule
+                                : _myRequestStatus == 'approved'
+                                    ? Icons.check_circle
+                                    : Icons.cancel,
+                            color: _myRequestStatus == 'pending'
+                                ? Colors.orange[700]
+                                : _myRequestStatus == 'approved'
+                                    ? Colors.green[700]
+                                    : Colors.red[700],
+                            size: 32,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _myRequestStatus == 'pending'
+                                      ? 'Request Pending'
+                                      : _myRequestStatus == 'approved'
+                                          ? 'Request Approved!'
+                                          : 'Request Rejected',
+                                  style: TextStyle(
+                                    color: _myRequestStatus == 'pending'
+                                        ? Colors.orange[700]
+                                        : _myRequestStatus == 'approved'
+                                            ? Colors.green[700]
+                                            : Colors.red[700],
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _myRequestStatus == 'pending'
+                                      ? 'Your adoption request is being reviewed by the owner.'
+                                      : _myRequestStatus == 'approved'
+                                          ? 'Congratulations! Your adoption request has been approved.'
+                                          : 'Your adoption request was not approved.',
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  
+                  // Adoption request section for non-owners who haven't requested
+                  if (!pet.adopted && !isOwner && !_hasRequestedAdoption) ...[
                     const SizedBox(height: 24),
                     const Divider(),
                     const SizedBox(height: 16),
@@ -242,7 +378,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                   id: const Uuid().v4(),
                                   petId: pet.id,
                                   requesterId: userId,
-                                  ownerId: pet.ownerId, // ✅ ADDED THIS LINE
                                   message: messageController.text.trim(),
                                   status: 'pending',
                                   createdAt: DateTime.now(),
@@ -250,6 +385,12 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                 try {
                                   await repo.requestAdoption(req);
                                   if (mounted) {
+                                    // Update state to show request was sent
+                                    setState(() {
+                                      _hasRequestedAdoption = true;
+                                      _myRequestStatus = 'pending';
+                                    });
+                                    
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('Adoption request sent!'),
@@ -257,13 +398,21 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                       ),
                                     );
                                     messageController.clear();
+                                    
+                                    // Refresh the lists
+                                    ref.invalidate(mySentRequestsWithDetailsProvider);
                                   }
                                 } catch (e) {
                                   if (mounted) {
+                                    final errorMessage = e.toString().contains('already have a pending')
+                                        ? 'You already have a pending request for this pet'
+                                        : 'Error: $e';
+                                    
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Error: $e'),
+                                        content: Text(errorMessage),
                                         backgroundColor: Colors.red,
+                                        duration: const Duration(seconds: 3),
                                       ),
                                     );
                                   }
@@ -324,9 +473,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                         }
                         return Column(
                           children: myRequestsForThisPet.map((req) {
-                            // Get requester name if available from joined data
-                            final requesterName = req.requesterName;
-                            
                             return Card(
                               margin: const EdgeInsets.only(bottom: 12),
                               elevation: 2,
@@ -341,10 +487,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'From: $requesterName',
+                                            'Requester ID: ${req.requesterId.substring(0, 8)}...',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 16,
                                             ),
                                           ),
                                         ),
@@ -378,17 +523,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                     ),
                                     if (req.message != null && req.message!.isNotEmpty) ...[
                                       const SizedBox(height: 12),
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue[50],
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: Colors.blue[100]!),
-                                        ),
-                                        child: Text(
-                                          req.message!,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
+                                      Text(
+                                        req.message!,
+                                        style: const TextStyle(fontSize: 14),
                                       ),
                                     ],
                                     if (req.status == 'pending') ...[
@@ -404,31 +541,15 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                               icon: const Icon(Icons.check),
                                               label: const Text('Approve'),
                                               onPressed: () async {
-                                                try {
-                                                  await repo.updateRequestStatus(req.id, 'approved');
-                                                  await repo.markPetAdopted(pet.id);
-                                                  
-                                                  // Refresh providers
-                                                  ref.invalidate(requestsForMyPetsProvider);
-                                                  ref.invalidate(petListProvider);
-                                                  
-                                                  if (mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text('Request approved! Pet marked as adopted.'),
-                                                        backgroundColor: Colors.green,
-                                                      ),
-                                                    );
-                                                  }
-                                                } catch (e) {
-                                                  if (mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text('Error: $e'),
-                                                        backgroundColor: Colors.red,
-                                                      ),
-                                                    );
-                                                  }
+                                                await repo.updateRequestStatus(req.id, 'approved');
+                                                await repo.markPetAdopted(pet.id);
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text('Request approved!'),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
                                                 }
                                               },
                                             ),
@@ -443,29 +564,14 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                               icon: const Icon(Icons.close),
                                               label: const Text('Reject'),
                                               onPressed: () async {
-                                                try {
-                                                  await repo.updateRequestStatus(req.id, 'rejected');
-                                                  
-                                                  // Refresh provider
-                                                  ref.invalidate(requestsForMyPetsProvider);
-                                                  
-                                                  if (mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text('Request rejected'),
-                                                        backgroundColor: Colors.orange,
-                                                      ),
-                                                    );
-                                                  }
-                                                } catch (e) {
-                                                  if (mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text('Error: $e'),
-                                                        backgroundColor: Colors.red,
-                                                      ),
-                                                    );
-                                                  }
+                                                await repo.updateRequestStatus(req.id, 'rejected');
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text('Request rejected'),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
                                                 }
                                               },
                                             ),

@@ -19,6 +19,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  String _userName = 'Petty User';
+  String _userEmail = 'Welcome to Petty!';
 
   // Drawer items
   final List<Map<String, dynamic>> _pages = [
@@ -33,6 +35,28 @@ class _HomeScreenState extends State<HomeScreen> {
       'icon': Icons.pets,
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  void _loadUserInfo() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      setState(() {
+        _userEmail = user.email ?? 'Welcome to Petty!';
+        
+        // Get name from metadata
+        final metadata = user.userMetadata;
+        _userName = metadata?['name'] ?? 
+                    metadata?['full_name'] ?? 
+                    user.email?.split('@')[0].replaceAll('.', ' ').replaceAll('_', ' ') ?? 
+                    'Petty User';
+      });
+    }
+  }
 
   void _logout() async {
     await Supabase.instance.client.auth.signOut();
@@ -69,14 +93,21 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Column(
           children: [
-            const UserAccountsDrawerHeader(
-              accountName: Text('Petty User'),
-              accountEmail: Text('Welcome to Petty!'),
+            UserAccountsDrawerHeader(
+              accountName: Text(_userName),
+              accountEmail: Text(_userEmail),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.pets, color: Colors.teal, size: 32),
+                child: Text(
+                  _userName.isNotEmpty ? _userName[0].toUpperCase() : 'P',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    color: Colors.teal,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              decoration: BoxDecoration(color: Colors.teal),
+              decoration: const BoxDecoration(color: Colors.teal),
             ),
             ..._pages.asMap().entries.map((entry) {
               int idx = entry.key;
@@ -107,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: page['widget'],
         ),
       ),
-      // REMOVED FAB - "Add Pet" is now a tab in PetAdoptionMenuPage
     );
   }
 }

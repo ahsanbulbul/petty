@@ -17,17 +17,10 @@ class _PetAdoptionMenuPageState extends ConsumerState<PetAdoptionMenuPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<Tab> myTabs = const [
-    Tab(text: "Available Pets", icon: Icon(Icons.pets)),
-    Tab(text: "Add Pet", icon: Icon(Icons.add)),
-    Tab(text: "My Requests", icon: Icon(Icons.send)),
-    Tab(text: "Requests for My Pets", icon: Icon(Icons.notifications)),
-  ];
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: myTabs.length, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -39,53 +32,133 @@ class _PetAdoptionMenuPageState extends ConsumerState<PetAdoptionMenuPage>
   Widget _buildTabView(int index) {
     switch (index) {
       case 0:
-        return const PetAdoptionHomePage(); // List of available pets
+        return const PetAdoptionHomePage();
       case 1:
-        // Wrap AddPetScreen with a Navigator callback
         return AddPetScreen(
           onPetAdded: () {
-            // Switch to Available Pets tab after adding
             if (mounted) {
               _tabController.animateTo(0);
-              // Refresh the pet list
               ref.invalidate(petListProvider);
             }
           },
         );
       case 2:
-        return const AdoptionRequestsPage(); // Requests user sent
+        return const AdoptionRequestsPage();
       case 3:
-        return const MyPetRequestsPage(); // Requests for user's pets
+        return const MyPetRequestsPage();
       default:
         return const Center(child: Text('Page not found'));
     }
   }
 
+  Widget _buildTab({
+    required String text,
+    required IconData icon,
+    required int notificationCount,
+  }) {
+    return Tab(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon),
+              const SizedBox(height: 4),
+              Text(
+                text,
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          if (notificationCount > 0)
+            Positioned(
+              right: -8,
+              top: -4,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 20,
+                  minHeight: 20,
+                ),
+                child: Center(
+                  child: Text(
+                    notificationCount > 99 ? '99+' : notificationCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Watch the notification counts
+    final myReceivedRequestsAsync = ref.watch(myReceivedRequestsWithDetailsProvider);
+    final mySentRequestsAsync = ref.watch(mySentRequestsWithDetailsProvider);
+
+    // Count pending requests
+    final receivedPendingCount = myReceivedRequestsAsync.whenData(
+      (requests) => requests.where((r) => r.status == 'pending').length,
+    ).value ?? 0;
+
+    final sentPendingCount = mySentRequestsAsync.whenData(
+      (requests) => requests.where((r) => r.status == 'pending').length,
+    ).value ?? 0;
+
     return Column(
       children: [
-        // TabBar without AppBar
         Material(
           color: Colors.teal,
           child: TabBar(
             controller: _tabController,
-            tabs: myTabs,
             isScrollable: false,
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
+            tabs: [
+              _buildTab(
+                text: "Available Pets",
+                icon: Icons.pets,
+                notificationCount: 0,
+              ),
+              _buildTab(
+                text: "Add Pet",
+                icon: Icons.add,
+                notificationCount: 0,
+              ),
+              _buildTab(
+                text: "My Requests",
+                icon: Icons.send,
+                notificationCount: sentPendingCount,
+              ),
+              _buildTab(
+                text: "Requests for My Pets",
+                icon: Icons.notifications,
+                notificationCount: receivedPendingCount,
+              ),
+            ],
           ),
         ),
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            children: List.generate(myTabs.length, (index) => _buildTabView(index)),
+            children: List.generate(4, (index) => _buildTabView(index)),
           ),
         ),
       ],
     );
   }
 }
-
-// Import this provider reference
