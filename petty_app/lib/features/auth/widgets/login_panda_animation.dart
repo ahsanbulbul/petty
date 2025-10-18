@@ -45,30 +45,23 @@ class LoginPandaAnimationState extends State<LoginPandaAnimation> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = Theme.of(context).brightness == Brightness.light
-        ? Colors.green[50]
-        : Colors.grey[900];
+    // Use the same background as the Scaffold
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
 
-   return Container(
-  width: double.infinity,
-  height: 240,
-  decoration: BoxDecoration(
-    color: bgColor,
-    borderRadius: BorderRadius.circular(16),
-  ),
-  child: Transform.translate(
-    offset: const Offset(0, 80), // move panda 30 pixels down
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: RiveAnimation.asset(
-        'assets/rive/panda_2_animation.riv',
-        fit: BoxFit.contain,
-        onInit: _onRiveInit,
+    return Container(
+      width: double.infinity,
+      height: 240,
+      color: bgColor, // now same as the rest of the screen
+      child: Transform.translate(
+        offset: const Offset(0, 80), // move panda down slightly if needed
+        child: RiveAnimation.asset(
+          'assets/rive/panda_2_animation.riv',
+          fit: BoxFit.contain,
+          onInit: _onRiveInit,
+        ),
       ),
-    ),
-  ),
-);
-
-
+    );
   }
 }
+
+

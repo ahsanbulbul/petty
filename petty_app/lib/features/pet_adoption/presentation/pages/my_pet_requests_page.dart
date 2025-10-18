@@ -10,13 +10,8 @@ class MyPetRequestsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final receivedAsync = ref.watch(myReceivedRequestsWithDetailsProvider);
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Requests for My Pets'),
-        centerTitle: true,
-        backgroundColor: Colors.teal,
-      ),
       body: receivedAsync.when(
         data: (reqs) {
           if (reqs.isEmpty) {
@@ -42,13 +37,13 @@ class MyPetRequestsPage extends ConsumerWidget {
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: reqs.length,
             itemBuilder: (context, index) {
               final req = reqs[index];
-              
+
               final petName = req.petName;
               final petImageUrl = req.petImageUrl;
               final petImagePath = req.petImagePath;
@@ -56,11 +51,11 @@ class MyPetRequestsPage extends ConsumerWidget {
               final status = req.status;
               final message = req.message ?? '';
               final createdAt = req.createdAt;
-              
+
               Color statusColor;
               IconData statusIcon;
               String statusText;
-              
+
               switch (status.toLowerCase()) {
                 case 'approved':
                   statusColor = Colors.green;
@@ -77,7 +72,7 @@ class MyPetRequestsPage extends ConsumerWidget {
                   statusIcon = Icons.schedule;
                   statusText = 'Pending';
               }
-              
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 elevation: 2,
@@ -96,7 +91,6 @@ class MyPetRequestsPage extends ConsumerWidget {
                             child: _buildPetImage(petImageUrl, petImagePath, ref),
                           ),
                           const SizedBox(width: 16),
-                          
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +146,6 @@ class MyPetRequestsPage extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      
                       if (message.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Container(
@@ -195,11 +188,9 @@ class MyPetRequestsPage extends ConsumerWidget {
                           ),
                         ),
                       ],
-                      
                       const SizedBox(height: 12),
                       const Divider(height: 1),
                       const SizedBox(height: 12),
-                      
                       Row(
                         children: [
                           Container(
@@ -235,29 +226,30 @@ class MyPetRequestsPage extends ConsumerWidget {
                             ),
                           ),
                           const Spacer(),
-                          
-                          // Action buttons for pending requests
                           if (status.toLowerCase() == 'pending') ...[
-                            TextButton.icon(
+                            TextButton(
                               onPressed: () async {
                                 await _handleReject(context, ref, req.id);
                               },
-                              icon: const Icon(Icons.close, size: 18),
-                              label: const Text('Reject'),
+                              child: const Text('Reject'),
                               style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                minimumSize: const Size(70, 36),
+                                textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                                 foregroundColor: Colors.red,
                               ),
                             ),
                             const SizedBox(width: 8),
-                            ElevatedButton.icon(
+                            ElevatedButton(
                               onPressed: () async {
                                 await _handleApprove(context, ref, req.id, req.petId);
                               },
-                              icon: const Icon(Icons.check, size: 18),
-                              label: const Text('Approve'),
+                              child: const Text('Approve'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                minimumSize: const Size(70, 36),
+                                textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                               ),
                             ),
                           ],
@@ -297,9 +289,7 @@ class MyPetRequestsPage extends ConsumerWidget {
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
               ),
             ],
           ),
@@ -307,12 +297,10 @@ class MyPetRequestsPage extends ConsumerWidget {
       ),
     );
   }
-  
+
   Widget _buildPetImage(String? imageUrl, String? imagePath, WidgetRef ref) {
-    // Try imageUrl first
     if (imageUrl != null && imageUrl.isNotEmpty) {
       try {
-        // Check if it's base64
         final bytes = base64Decode(imageUrl);
         return Image.memory(
           bytes,
@@ -321,7 +309,6 @@ class MyPetRequestsPage extends ConsumerWidget {
           fit: BoxFit.cover,
         );
       } catch (e) {
-        // Not base64, try as URL
         return Image.network(
           imageUrl,
           width: 80,
@@ -333,8 +320,6 @@ class MyPetRequestsPage extends ConsumerWidget {
         );
       }
     }
-    
-    // Try imagePath
     if (imagePath != null && imagePath.isNotEmpty) {
       final repo = ref.read(petAdoptionRepositoryProvider);
       final publicUrl = repo.getPublicImageUrl(imagePath);
@@ -348,10 +333,9 @@ class MyPetRequestsPage extends ConsumerWidget {
         },
       );
     }
-    
     return _buildPlaceholderImage();
   }
-  
+
   Widget _buildPlaceholderImage() {
     return Container(
       width: 80,
@@ -367,32 +351,24 @@ class MyPetRequestsPage extends ConsumerWidget {
       ),
     );
   }
-  
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return '${difference.inMinutes}m ago';
-      }
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+    final diff = now.difference(date);
+    if (diff.inDays == 0) {
+      if (diff.inHours == 0) return '${diff.inMinutes}m ago';
+      return '${diff.inHours}h ago';
+    } else if (diff.inDays == 1) return 'Yesterday';
+    else if (diff.inDays < 7) return '${diff.inDays}d ago';
+    else return '${date.day}/${date.month}/${date.year}';
   }
-  
+
   Future<void> _handleApprove(
     BuildContext context,
     WidgetRef ref,
     String requestId,
     String petId,
   ) async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -409,28 +385,23 @@ class MyPetRequestsPage extends ConsumerWidget {
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              minimumSize: const Size(70, 36),
+              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             child: const Text('Approve'),
           ),
         ],
       ),
     );
-
     if (confirmed != true) return;
 
     try {
       final repo = ref.read(petAdoptionRepositoryProvider);
-      
-      // Update request status
       await repo.updateRequestStatus(requestId, 'approved');
-      
-      // Mark pet as adopted
       await repo.markPetAdopted(petId);
-      
-      // Refresh the list
       ref.invalidate(myReceivedRequestsWithDetailsProvider);
       ref.invalidate(petListProvider);
-      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -451,13 +422,12 @@ class MyPetRequestsPage extends ConsumerWidget {
       }
     }
   }
-  
+
   Future<void> _handleReject(
     BuildContext context,
     WidgetRef ref,
     String requestId,
   ) async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -472,22 +442,21 @@ class MyPetRequestsPage extends ConsumerWidget {
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              minimumSize: const Size(70, 36),
+              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             child: const Text('Reject'),
           ),
         ],
       ),
     );
-
     if (confirmed != true) return;
 
     try {
       final repo = ref.read(petAdoptionRepositoryProvider);
       await repo.updateRequestStatus(requestId, 'rejected');
-      
-      // Refresh the list
       ref.invalidate(myReceivedRequestsWithDetailsProvider);
-      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

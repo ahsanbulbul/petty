@@ -21,12 +21,12 @@ class AddPetScreen extends ConsumerStatefulWidget {
 class _AddPetScreenState extends ConsumerState<AddPetScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _typeController = TextEditingController();
   final _ageController = TextEditingController();
   final _descController = TextEditingController();
   final _contactController = TextEditingController();
   String _gender = 'unknown';
   String? _selectedLocation;
+  String? _selectedType;
 
   XFile? _pickedXFile;
   Uint8List? _imageBytes;
@@ -34,24 +34,14 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // Common Bangladesh locations
+  final List<String> _petTypes = [
+    'Dog', 'Cat', 'Bird', 'Rabbit', 'Hamster', 'Fish', 'Turtle', 'Other',
+  ];
+
   final List<String> _locations = [
-    'Dhaka',
-    'Chittagong',
-    'Sylhet',
-    'Rajshahi',
-    'Khulna',
-    'Barisal',
-    'Rangpur',
-    'Mymensingh',
-    'Comilla',
-    'Gazipur',
-    'Narayanganj',
-    'Cox\'s Bazar',
-    'Jessore',
-    'Bogra',
-    'Dinajpur',
-    'Other',
+    'Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi', 'Khulna',
+    'Barisal', 'Rangpur', 'Mymensingh', 'Comilla', 'Gazipur',
+    'Narayanganj', 'Cox\'s Bazar', 'Jessore', 'Bogra', 'Dinajpur', 'Other',
   ];
 
   Future<void> _pickImage() async {
@@ -72,324 +62,273 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final repo = ref.read(petAdoptionRepositoryProvider);
-    final user = Supabase.instance.client.auth.currentUser;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Pet for Adoption'),
-        backgroundColor: Colors.teal,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              // Pet Photo Section
-              const Text(
-                'Pet Photo',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.teal,
-                ),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.teal, width: 2),
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.grey[100],
-                  ),
-                  child: _imageBytes != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.memory(_imageBytes!, fit: BoxFit.cover),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_photo_alternate,
-                                size: 60, color: Colors.teal[300]),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Tap to select pet image',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Basic Information Section
-              const Text(
-                'Basic Information',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.teal,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Pet Name *',
-                  hintText: 'e.g., Fluffy',
-                  prefixIcon: const Icon(Icons.pets),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                validator: (v) => v!.isEmpty ? 'Please enter pet name' : null,
-              ),
-              const SizedBox(height: 16),
-
-              Row(
+      resizeToAvoidBottomInset: true, // ✅ allows scroll when keyboard is open
+      
+      body: GestureDetector(
+        // ✅ tap outside to dismiss keyboard
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _typeController,
-                      decoration: InputDecoration(
-                        labelText: 'Pet Type *',
-                        hintText: 'Dog, Cat, Bird',
-                        prefixIcon: const Icon(Icons.category),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                      ),
-                      validator: (v) => v!.isEmpty ? 'Enter type' : null,
+                  // 📸 Pet Photo
+                  const Text(
+                    'Pet Photo',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.teal,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _ageController,
-                      decoration: InputDecoration(
-                        labelText: 'Age (years) *',
-                        hintText: 'e.g., 2',
-                        prefixIcon: const Icon(Icons.cake),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.teal, width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey[100],
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter age';
-                        if (int.tryParse(v) == null) return 'Invalid';
-                        return null;
-                      },
+                      child: _imageBytes != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.memory(
+                                _imageBytes!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate,
+                                    size: 60, color: Colors.teal[300]),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Tap to select pet image',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-              // Gender Selection
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey[50],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Gender',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                  // 🐶 Basic Information
+                  _sectionTitle('Basic Information'),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: _inputDecoration('Pet Name *', Icons.pets),
+                    validator: (v) =>
+                        v!.isEmpty ? 'Please enter pet name' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedType,
+                          decoration:
+                              _inputDecoration('Pet Type *', Icons.category),
+                          items: _petTypes
+                              .map((type) => DropdownMenuItem(
+                                    value: type,
+                                    child: Text(type),
+                                  ))
+                              .toList(),
+                          onChanged: (v) => setState(() => _selectedType = v),
+                          validator: (v) => v == null ? 'Select type' : null,
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _ageController,
+                          decoration:
+                              _inputDecoration('Age (years) *', Icons.cake),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Enter age';
+                            if (int.tryParse(v) == null) return 'Invalid';
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 🚻 Gender
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[50],
                     ),
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Male'),
-                            value: 'male',
-                            groupValue: _gender,
-                            onChanged: (val) => setState(() => _gender = val!),
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
+                        const Text(
+                          'Gender',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
                           ),
                         ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Female'),
-                            value: 'female',
-                            groupValue: _gender,
-                            onChanged: (val) => setState(() => _gender = val!),
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Unknown'),
-                            value: 'unknown',
-                            groupValue: _gender,
-                            onChanged: (val) => setState(() => _gender = val!),
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                          ),
+                        Row(
+                          children: [
+                            _genderRadio('Male', 'male'),
+                            _genderRadio('Female', 'female'),
+                            _genderRadio('Unknown', 'unknown'),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Contact & Location Section
-              const Text(
-                'Contact & Location',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.teal,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _contactController,
-                decoration: InputDecoration(
-                  labelText: 'Contact Number *',
-                  hintText: 'e.g., 01712345678',
-                  prefixIcon: const Icon(Icons.phone),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
                   ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(11),
-                ],
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Enter contact number';
-                  if (v.length < 11) return 'Enter valid 11-digit number';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-              DropdownButtonFormField<String>(
-                value: _selectedLocation,
-                decoration: InputDecoration(
-                  labelText: 'Location *',
-                  hintText: 'Select location',
-                  prefixIcon: const Icon(Icons.location_on),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  // 📍 Contact & Location
+                  _sectionTitle('Contact & Location'),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _contactController,
+                    decoration:
+                        _inputDecoration('Contact Number *', Icons.phone),
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ],
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Enter contact number';
+                      if (v.length < 11) return 'Enter valid 11-digit number';
+                      return null;
+                    },
                   ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                items: _locations.map((location) {
-                  return DropdownMenuItem<String>(
-                    value: location,
-                    child: Text(location),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedLocation = value);
-                },
-                validator: (v) => v == null ? 'Please select a location' : null,
-              ),
-              const SizedBox(height: 24),
-
-              // Description Section
-              const Text(
-                'Additional Information',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.teal,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _descController,
-                decoration: InputDecoration(
-                  labelText: 'Description (Optional)',
-                  hintText: 'Tell us more about this pet...',
-                  alignLabelWithHint: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedLocation,
+                    decoration:
+                        _inputDecoration('Location *', Icons.location_on),
+                    items: _locations
+                        .map((loc) => DropdownMenuItem(
+                              value: loc,
+                              child: Text(loc),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedLocation = v),
+                    validator: (v) =>
+                        v == null ? 'Please select a location' : null,
                   ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                maxLines: 4,
-              ),
-              const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              // Submit Button
-              SizedBox(
-                height: 56,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
+                  // 📝 Description
+                  _sectionTitle('Additional Information'),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _descController,
+                    decoration:
+                        _inputDecoration('Description (Optional)', Icons.edit),
+                    maxLines: 4,
                   ),
-                  onPressed: _loading ? null : _handleSubmit,
-                  child: _loading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_circle_outline, size: 24),
-                            SizedBox(width: 8),
-                            Text(
-                              'Add Pet for Adoption',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                  const SizedBox(height: 24),
+
+                  // 🚀 Submit Button
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                ),
+                        elevation: 2,
+                      ),
+                      onPressed: _loading ? null : _handleSubmit,
+                      child: _loading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_circle_outline, size: 24),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Add Pet for Adoption',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _sectionTitle(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
+        color: Colors.teal,
+      ),
+    );
+  }
+
+  Widget _genderRadio(String title, String value) {
+    return Expanded(
+      child: RadioListTile<String>(
+        title: Text(title),
+        value: value,
+        groupValue: _gender,
+        onChanged: (val) => setState(() => _gender = val!),
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      filled: true,
+      fillColor: Colors.grey[50],
     );
   }
 
@@ -398,34 +337,25 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
 
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to add a pet.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Please log in')));
       return;
     }
-
     if (_imageBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a pet image')),
-      );
+          const SnackBar(content: Text('Please select a pet image')));
       return;
     }
 
     setState(() => _loading = true);
-
     try {
       final repo = ref.read(petAdoptionRepositoryProvider);
-      String? imageBase64;
-
-      // Convert image to base64
-      if (_imageBytes != null) {
-        imageBase64 = base64Encode(_imageBytes!);
-      }
+      final imageBase64 = base64Encode(_imageBytes!);
 
       final pet = PetAdoption(
         id: const Uuid().v4(),
         name: _nameController.text.trim(),
-        type: _typeController.text.trim(),
+        type: _selectedType!.toLowerCase(),
         age: int.parse(_ageController.text.trim()),
         gender: _gender,
         description: _descController.text.trim().isEmpty
@@ -433,8 +363,8 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
             : _descController.text.trim(),
         location: _selectedLocation,
         contactNumber: _contactController.text.trim(),
-        imagePath: null,
         imageUrl: imageBase64,
+        imagePath: null,
         ownerId: user.id,
         status: 'available',
         createdAt: DateTime.now(),
@@ -443,66 +373,49 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
       await repo.addPet(pet);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Pet added successfully!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Pet added successfully!'),
+            ],
           ),
-        );
-
-        // Call the callback
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ));
         widget.onPetAdded?.call();
 
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        // Clear form
-        _nameController.clear();
-        _typeController.clear();
-        _ageController.clear();
-        _descController.clear();
-        _contactController.clear();
+        _formKey.currentState!.reset();
         setState(() {
           _gender = 'unknown';
           _selectedLocation = null;
+          _selectedType = null;
           _pickedXFile = null;
           _imageBytes = null;
         });
       }
     } catch (e) {
-      print('Error adding pet: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(child: Text('Error: $e')),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Error: $e')),
+            ],
           ),
-        );
+          backgroundColor: Colors.red,
+        ));
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _typeController.dispose();
     _ageController.dispose();
     _descController.dispose();
     _contactController.dispose();
