@@ -11,8 +11,6 @@ class AuthNotifier extends StateNotifier<bool> {
   Future<bool> login(String email, String password) async {
     try {
       final response = await SupabaseService.signIn(email, password);
-      
-      // Check if user session exists
       if (response.session != null && response.user != null) {
         state = true;
         return true;
@@ -30,18 +28,12 @@ class AuthNotifier extends StateNotifier<bool> {
   Future<bool> signup(String email, String password) async {
     try {
       final response = await SupabaseService.signUp(email, password);
-      
-      // Important: Supabase signup may succeed but user needs to confirm email
-      // In this case, user object exists but session might be null
       if (response.user != null) {
-        // Check if email confirmation is required
         if (response.session == null) {
-          // Email confirmation required - don't set state to true
           print('Signup successful - Email confirmation required');
           state = false;
-          return true; // Return true because signup succeeded
+          return true;
         } else {
-          // Auto-login succeeded (email confirmation disabled)
           state = true;
           return true;
         }
@@ -61,17 +53,14 @@ class AuthNotifier extends StateNotifier<bool> {
       await SupabaseService.signInWithGoogle();
       state = true;
     } catch (e) {
+      print("Google login error: $e");
       state = false;
       rethrow;
     }
   }
 
   Future<void> resetPassword(String email) async {
-    try {
-      await SupabaseService.resetPassword(email);
-    } catch (e) {
-      rethrow;
-    }
+    await SupabaseService.resetPassword(email);
   }
 
   Future<void> logout() async {
