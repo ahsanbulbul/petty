@@ -1,6 +1,6 @@
 services:
   pet-api:
-    image: pet-api:latest
+    image: localhost/pet-api:latest
     container_name: pet-api
     ports:
       - "19911:19911"
