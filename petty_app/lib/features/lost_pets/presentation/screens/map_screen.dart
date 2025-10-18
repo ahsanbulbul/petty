@@ -67,12 +67,33 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
-    // Default to Dhaka
-    currentLocation = LatLng(23.8103, 90.4125);
-    // Delay loading pings until after the build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadLostPets();
-    });
+    // Try to get user's current location first
+    _initLocationAndLoadPets();
+  }
+
+  Future<void> _initLocationAndLoadPets() async {
+    try {
+      final location = await _locationService.getCurrentLocation();
+      if (!_isDisposed && mounted) {
+        setState(() {
+          currentLocation = location;
+        });
+        // Move the map to the user's location immediately
+        _mapController.move(location, currentZoom);
+      }
+    } catch (e) {
+      // If location fails, fallback to Dhaka
+      if (!_isDisposed && mounted) {
+        setState(() {
+          currentLocation = LatLng(23.8103, 90.4125);
+        });
+        _mapController.move(LatLng(23.8103, 90.4125), currentZoom);
+      }
+    } finally {
+      if (!_isDisposed && mounted) {
+        _loadLostPets();
+      }
+    }
   }
 
   Future<void> _loadLostPets() async {
