@@ -10,7 +10,7 @@ class AdoptionRequestsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mySentAsync = ref.watch(mySentRequestsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Adoption Requests (Sent)')),
+     //backgroundColor: const Color.fromARGB(255, 232, 246, 249),
       body: mySentAsync.when(
         data: (reqs) {
           if (reqs.isEmpty) return const Center(child: Text('No adoption requests yet.'));

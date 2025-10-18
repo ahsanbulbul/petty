@@ -3,22 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 
-// 🧩 Auth screens
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/home_screen.dart';
 import 'features/auth/screens/reset_password_screen.dart';
-
-// 🎨 Theme setup
-import 'core/theme/app_theme.dart';
-
-// 🐾 Pet Adoption feature routes
 import 'features/pet_adoption/presentation/pages/pet_adoption_home_page.dart';
 import 'features/pet_adoption/presentation/pages/add_pet_screen.dart';
 import 'features/pet_adoption/presentation/pages/adoption_requests_page.dart';
 import 'features/pet_adoption/presentation/pages/my_pet_requests_page.dart';
-
-// 🌟 ThemeMode provider
-final themeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,7 +41,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.initState();
     _user = Supabase.instance.client.auth.currentUser;
 
-    // Listen for auth state changes
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
       setState(() {
@@ -56,7 +48,6 @@ class _MyAppState extends ConsumerState<MyApp> {
       });
     });
 
-    // Handle deep links
     _handleInitialDeepLink();
   }
 
@@ -80,17 +71,17 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeProvider);
+    // 🔹 Correct way: watch the provider, returns ThemeMode directly
+    final themeMode = ref.watch(themeNotifierProvider);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Petty App',
       theme: lightTheme,
       darkTheme: darkTheme,
-      themeMode: themeMode,
+      themeMode: themeMode, // <-- Use it directly
       home: Builder(
         builder: (context) {
-          // ✅ Handle deep link navigation
           if (_deepLinkToken != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -109,7 +100,6 @@ class _MyAppState extends ConsumerState<MyApp> {
             });
           }
 
-          // Normal login/home flow
           return _user == null ? const LoginScreen() : const HomeScreen();
         },
       ),

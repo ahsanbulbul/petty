@@ -10,7 +10,8 @@ class PetAdoptionMenuPage extends ConsumerStatefulWidget {
   const PetAdoptionMenuPage({super.key});
 
   @override
-  ConsumerState<PetAdoptionMenuPage> createState() => _PetAdoptionMenuPageState();
+  ConsumerState<PetAdoptionMenuPage> createState() =>
+      _PetAdoptionMenuPageState();
 }
 
 class _PetAdoptionMenuPageState extends ConsumerState<PetAdoptionMenuPage>
@@ -56,42 +57,50 @@ class _PetAdoptionMenuPageState extends ConsumerState<PetAdoptionMenuPage>
     required IconData icon,
     required int notificationCount,
   }) {
-    return Tab(
+    return SizedBox(
+      height: 65,
       child: Stack(
         clipBehavior: Clip.none,
+        alignment: Alignment.center,
         children: [
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon),
+              Icon(icon, size: 22),
               const SizedBox(height: 4),
               Text(
                 text,
-                style: const TextStyle(fontSize: 12),
-                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
               ),
             ],
           ),
           if (notificationCount > 0)
             Positioned(
-              right: -8,
-              top: -4,
+              right: 8,
+              top: 0,
               child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.red,
+                decoration: BoxDecoration(
+                  color: Colors.red[600],
                   shape: BoxShape.circle,
                 ),
                 constraints: const BoxConstraints(
-                  minWidth: 20,
-                  minHeight: 20,
+                  minWidth: 18,
+                  minHeight: 18,
                 ),
                 child: Center(
                   child: Text(
-                    notificationCount > 99 ? '99+' : notificationCount.toString(),
+                    notificationCount > 9 ? '9+' : notificationCount.toString(),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -105,60 +114,93 @@ class _PetAdoptionMenuPageState extends ConsumerState<PetAdoptionMenuPage>
 
   @override
   Widget build(BuildContext context) {
-    // Watch the notification counts
-    final myReceivedRequestsAsync = ref.watch(myReceivedRequestsWithDetailsProvider);
+    final myReceivedRequestsAsync =
+        ref.watch(myReceivedRequestsWithDetailsProvider);
     final mySentRequestsAsync = ref.watch(mySentRequestsWithDetailsProvider);
 
-    // Count pending requests
     final receivedPendingCount = myReceivedRequestsAsync.whenData(
-      (requests) => requests.where((r) => r.status == 'pending').length,
-    ).value ?? 0;
+          (requests) => requests.where((r) => r.status == 'pending').length,
+        ).value ??
+        0;
 
     final sentPendingCount = mySentRequestsAsync.whenData(
-      (requests) => requests.where((r) => r.status == 'pending').length,
-    ).value ?? 0;
+          (requests) => requests.where((r) => r.status == 'pending').length,
+        ).value ??
+        0;
 
-    return Column(
-      children: [
-        Material(
-          color: Colors.teal,
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: false,
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: [
-              _buildTab(
-                text: "Available Pets",
-                icon: Icons.pets,
-                notificationCount: 0,
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: Column(
+        children: [
+          // Full-width top bar with background color
+          Container(
+            color: const Color.fromARGB(255, 0, 188, 212),
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  // Row with back button + tabs
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new,
+                            color: Colors.white),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 60,
+                          alignment: Alignment.centerLeft,
+                          child: TabBar(
+                            controller: _tabController,
+                            isScrollable: false,
+                            indicatorColor: Colors.white,
+                            indicatorWeight: 3,
+                            labelColor: Colors.white,
+                            unselectedLabelColor: Colors.white.withOpacity(0.7),
+                            labelPadding: EdgeInsets.zero,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            tabs: [
+                              _buildTab(
+                                text: "Available",
+                                icon: Icons.pets,
+                                notificationCount: 0,
+                              ),
+                              _buildTab(
+                                text: "Add Pet",
+                                icon: Icons.add_circle_outline,
+                                notificationCount: 0,
+                              ),
+                              _buildTab(
+                                text: "Sent",
+                                icon: Icons.send_outlined,
+                                notificationCount: sentPendingCount,
+                              ),
+                              _buildTab(
+                                text: "Received",
+                                icon: Icons.notifications_outlined,
+                                notificationCount: receivedPendingCount,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              _buildTab(
-                text: "Add Pet",
-                icon: Icons.add,
-                notificationCount: 0,
-              ),
-              _buildTab(
-                text: "My Requests",
-                icon: Icons.send,
-                notificationCount: sentPendingCount,
-              ),
-              _buildTab(
-                text: "Requests for My Pets",
-                icon: Icons.notifications,
-                notificationCount: receivedPendingCount,
-              ),
-            ],
+            ),
           ),
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: List.generate(4, (index) => _buildTabView(index)),
+
+          // TabBarView
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: List.generate(4, (index) => _buildTabView(index)),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

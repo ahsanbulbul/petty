@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:petty_app/main.dart';
 import 'package:rive/rive.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 import '../app.dart'; // for themeProvider
+//import ''
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
