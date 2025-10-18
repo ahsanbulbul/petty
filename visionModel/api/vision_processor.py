@@ -31,14 +31,14 @@ class VisionProcessor:
         Initialize vision processor
         
         Args:
-            cache_dir: Directory to cache model files (defaults to ../models_cache)
+            cache_dir: Directory to cache model files (defaults to env MODELS_CACHE or /app/models_cache)
         """
         if cache_dir is None:
-            # Default to parent directory's models_cache
-            cache_dir = str(Path(__file__).parent.parent / "models_cache")
+            # Check environment variable first, then default
+            cache_dir = os.environ.get('MODELS_CACHE', '/app/models_cache')
         
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(exist_ok=True)
+        self.cache_dir.mkdir(exist_ok=True, parents=True)
         
         # Force transformers to use our cache directory ONLY
         os.environ['TRANSFORMERS_CACHE'] = str(self.cache_dir)
@@ -63,15 +63,19 @@ class VisionProcessor:
             logger.info("Loading YOLOv8-Seg...")
             yolo_path = self.cache_dir / 'yolov8x-seg.pt'
             
-            if not yolo_path.exists():
-                logger.info("Downloading YOLOv8-Seg...")
-                self.detector = YOLO('yolov8x-seg.pt')
-                self.detector.model.to(self.device)
-            else:
-                logger.info("Loading YOLOv8-Seg from cache...")
+            if yolo_path.exists():
+                logger.info(f"Loading YOLOv8-Seg from cache: {yolo_path}")
                 self.detector = YOLO(str(yolo_path))
-                self.detector.model.to(self.device)
+            else:
+                logger.warning(f"YOLOv8 model not found at {yolo_path}, downloading...")
+                self.detector = YOLO('yolov8x-seg.pt')
+                # Save to cache directory for next time
+                if self.detector.ckpt_path:
+                    import shutil
+                    shutil.copy(self.detector.ckpt_path, yolo_path)
+                    logger.info(f"Saved YOLOv8 model to {yolo_path}")
             
+            self.detector.model.to(self.device)
             logger.info("✓ YOLOv8-Seg loaded")
             
             # Load DINOv2

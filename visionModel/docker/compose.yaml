@@ -1,0 +1,12 @@
+services:
+  pet-api:
+    image: pet-api:latest
+    container_name: pet-api
+    ports:
+      - "19911:19911"
+    volumes:
+      - pet-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  pet-data:

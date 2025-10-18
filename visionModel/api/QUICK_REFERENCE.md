@@ -105,6 +105,7 @@ python3 test_api.py
 
 - **Pet Type**: Must be one of: cat, dog, bird, rabbit
 - **Gender**: Must be one of: male, female, unsure
+  - `unsure` = neutral matching (50% weight, doesn't penalize matches)
 - **Images**: At least 1 base64 encoded image required
 - **Coordinates**: Valid lat/lon ranges
 - **Update**: Submitting same ID deletes old entry and creates new

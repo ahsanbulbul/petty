@@ -16,7 +16,5 @@ numpy>=1.24.0
 # Database
 # SQLite is included with Python, no extra package needed
 
-# Optional: For production deployment
-gunicorn>=21.2.0
-python-dotenv>=1.0.0
+# Optional
 requests>=2.31.0
