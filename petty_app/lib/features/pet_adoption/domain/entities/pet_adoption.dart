@@ -1,6 +1,9 @@
 // lib/features/pet_adoption/domain/entities/pet_adoption.dart
 //import 'package:flutter/foundation.dart';
 
+// lib/features/pet_adoption/domain/entities/pet_adoption.dart
+// REPLACE your PetAdoption class with this updated version:
+
 class PetAdoption {
   final String id;
   final String name;
@@ -9,8 +12,9 @@ class PetAdoption {
   final String gender;
   final String? description;
   final String? location;
-  final String? imagePath;     // matches 'image_path' in DB
-  final String? imageUrl;      // matches 'image_url' in DB
+  final String? contactNumber; // ADD THIS FIELD
+  final String? imagePath;
+  final String? imageUrl;
   final String ownerId;
   final String? status;
   final DateTime createdAt;
@@ -23,6 +27,7 @@ class PetAdoption {
     required this.gender,
     this.description,
     this.location,
+    this.contactNumber, // ADD THIS
     this.imagePath,
     this.imageUrl,
     required this.ownerId,
@@ -40,6 +45,7 @@ class PetAdoption {
         gender: json['gender'] as String? ?? 'unknown',
         description: json['description'] as String?,
         location: json['location'] as String?,
+        contactNumber: json['contact_number'] as String?, // ADD THIS
         imagePath: json['image_path'] as String?,
         imageUrl: json['image_url'] as String?,
         ownerId: json['owner_id'] as String,
@@ -55,6 +61,7 @@ class PetAdoption {
         'gender': gender,
         'description': description,
         'location': location,
+        'contact_number': contactNumber, // ADD THIS
         'image_path': imagePath,
         'image_url': imageUrl,
         'owner_id': ownerId,
@@ -64,7 +71,6 @@ class PetAdoption {
 
   bool get adopted => status == 'adopted';
 }
-
 // lib/features/pet_adoption/domain/entities/pet_adoption.dart
 // REPLACE your existing AdoptionRequest class with this updated version:
 
