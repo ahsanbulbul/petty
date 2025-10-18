@@ -28,11 +28,10 @@ class PetPost:
     """
     id: str
     pet_type: str  # 'cat' or 'dog'
-    # description: Optional[str]  # Special markings, patterns, etc.
+    description: Optional[str]  # Special markings, patterns, etc.
     latitude: float
     longitude: float
     timestamp: datetime
-    # neutered: Optional[bool]
     gender: Optional[str]  # 'male', 'female', or 'unsure'    
     # Precomputed embeddings (loaded from database)
     embeddings: List[np.ndarray]  # DINOv2 embeddings (already computed)
