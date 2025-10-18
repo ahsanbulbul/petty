@@ -22,14 +22,73 @@ class SupabasePetPingRepository implements PetPingRepository {
   return pings;
   }
 
-  // Delete a ping by id for a user (removes from join table and then from pet_pings)
+  // Delete a ping by id for a user (removes from pet_pings and associated user_pet_pings entries)
   Future<void> deletePing(String pingId, {String? userId}) async {
-    if (userId != null) {
-      // Remove the association first
-      await _client.from('user_pet_pings').delete().eq('user_id', userId).eq('pet_ping_id', pingId);
+    try {
+      print('Starting deletion process for pingId: $pingId, userId: $userId');
+
+      if (userId == null) {
+        throw Exception('userId is required for deletion');
+      }
+
+      // First verify the ping exists and belongs to the user
+      final verify = await _client
+          .from('user_pet_pings')
+          .select()
+          .eq('user_id', userId)
+          .eq('pet_ping_id', pingId)
+          .single();
+      
+      if (verify == null) {
+        throw Exception('Ping not found or does not belong to the user');
+      }
+
+      print('Verified ping ownership, proceeding with deletion');
+
+      // Delete from user_pet_pings first
+      final userPingResponse = await _client
+          .from('user_pet_pings')
+          .delete()
+          .eq('user_id', userId)
+          .eq('pet_ping_id', pingId)
+          .select();  // Add .select() to get response data
+      
+      if (userPingResponse == null || userPingResponse.isEmpty) {
+        throw Exception('Failed to delete from user_pet_pings');
+      }
+      print('Successfully deleted from user_pet_pings: $userPingResponse');
+
+      // Then delete from pet_pings with explicit error handling
+      try {
+        print('Attempting to delete ping with direct SQL via RPC...');
+        await _client.rpc(
+          'delete_pet_ping',
+          params: {'ping_id': pingId}
+        );
+        
+        // Verify deletion
+        final verifyDeleted = await _client
+            .from('pet_pings')
+            .select()
+            .eq('id', pingId)
+            .maybeSingle();
+            
+        if (verifyDeleted != null) {
+          print('Verification failed - ping still exists after deletion');
+          throw Exception('Ping still exists after deletion attempt');
+        }
+        
+        print('Successfully verified deletion from pet_pings');
+      } catch (e) {
+        print('Error in pet_pings deletion: $e');
+        throw Exception('Failed to delete from pet_pings: $e');
+      }
+
+    } catch (e, stackTrace) {
+      print('Error during deletion: $e');
+      print('Stack trace: $stackTrace');
+      throw Exception('Failed to delete ping: $e');
     }
-    // Optionally, also delete the ping itself (if you want to fully remove it)
-    await _client.from('pet_pings').delete().eq('id', pingId);
   }
 
   // Add a new pet ping and bind to user

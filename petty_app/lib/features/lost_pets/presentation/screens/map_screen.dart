@@ -9,7 +9,6 @@ import '../../domain/entities/pet_ping.dart';
 import '../../data/repositories/supabase_pet_ping_repository.dart';
 import '../widgets/pet_marker.dart';
 import '../providers/pet_filter_provider.dart';
-import '../providers/pings_refresh_provider.dart';
 import '../widgets/pet_filter_sheet.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -20,6 +19,14 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateMixin {
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   void _animatedMapMove(LatLng destLocation, double destZoom) {
     final latTween = Tween<double>(begin: currentLocation?.latitude ?? destLocation.latitude, end: destLocation.latitude);
     final lngTween = Tween<double>(begin: currentLocation?.longitude ?? destLocation.longitude, end: destLocation.longitude);
@@ -68,28 +75,21 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Listen for refresh trigger changes and reload lost pets when it updates
-    // Use addPostFrameCallback to avoid calling setState during build
-    final container = ProviderScope.containerOf(context);
-    container.listen<int>(pingsRefreshProvider, (previous, next) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadLostPets());
-    });
-  }
-
   Future<void> _loadLostPets() async {
+    if (_isDisposed || !mounted) return;
+    
     if (!_isLoading) {
+      if (!mounted) return;
       setState(() {
         _isLoading = true;
       });
+      
       try {
         final repository = ref.read(petPingRepositoryProvider);
         final pings = await repository.getAllLostPets();
         debugPrint('Received ${pings.length} lost pets');
         
-        if (mounted) {
+        if (!_isDisposed && mounted) {
           setState(() {
             nearbyPings = pings;
             _isLoading = false;
@@ -104,7 +104,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
         }
       } catch (e) {
         print('Error loading lost pets: $e');
-        if (mounted) {
+        if (!_isDisposed && mounted) {
           setState(() {
             _isLoading = false;
           });
