@@ -8,6 +8,8 @@ import 'package:petty_app/core/services/location_service.dart';
 import '../../domain/entities/pet_ping.dart';
 import '../../data/repositories/supabase_pet_ping_repository.dart';
 import '../widgets/pet_marker.dart';
+import '../providers/pet_filter_provider.dart';
+import '../widgets/pet_filter_sheet.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -101,6 +103,17 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final filter = ref.watch(petFilterProvider);
+    // Apply filter to nearbyPings
+    final filteredPings = nearbyPings.where((ping) {
+  if (filter.isLost != null && ping.isLost != filter.isLost) return false;
+  if (filter.gender != null && ping.gender != filter.gender) return false;
+  if (filter.petType != null && ping.petType != filter.petType) return false;
+  if (filter.startTime != null && ping.timestamp.isBefore(filter.startTime!)) return false;
+  if (filter.endTime != null && ping.timestamp.isAfter(filter.endTime!)) return false;
+  return true;
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pet Map'),
@@ -108,6 +121,17 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadLostPets,
+          ),
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const PetFilterSheet(),
+              );
+            },
           ),
         ],
       ),
@@ -118,8 +142,8 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
             options: MapOptions(
               initialCenter: currentLocation ?? LatLng(23.8103, 90.4125),
               initialZoom: currentZoom,
-              minZoom: 3.0,  // Prevent zooming out too far
-              maxZoom: 18.0, // Prevent zooming in too far
+              minZoom: 3.0,
+              maxZoom: 18.0,
               interactionOptions: InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
@@ -145,12 +169,12 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                         size: 40,
                       ),
                     ),
-                  for (final ping in nearbyPings)
-                      PetMarker(
-                        point: ping.location,
-                        isLost: ping.isLost,
-                        title: ping.title,
-                        onTap: () => _showPetDetails(context, ping),
+                  for (final ping in filteredPings)
+                    PetMarker(
+                      point: ping.location,
+                      isLost: ping.isLost,
+                      title: ping.title,
+                      onTap: () => _showPetDetails(context, ping),
                     ),
                 ],
               ),
@@ -206,7 +230,6 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
           try {
             final location = await _locationService.getCurrentLocation();
             if (!mounted) return;
-            
             setState(() {
               currentLocation = location;
               currentZoom = 15.0;
@@ -216,14 +239,12 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
           } catch (e) {
             if (!mounted) return;
             setState(() => _isLoading = false);
-            
             String errorMessage = 'Could not get your location';
             if (e.toString().contains('disabled')) {
               errorMessage = 'Please enable location services';
             } else if (e.toString().contains('denied')) {
               errorMessage = 'Location permission required';
             }
-            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(errorMessage)),
             );
