@@ -222,6 +222,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
               items: const [
                 DropdownMenuItem(value: 'male', child: Text('Male')),
                 DropdownMenuItem(value: 'female', child: Text('Female')),
+                DropdownMenuItem(value: 'unsure', child: Text('Unsure')),
               ],
               onChanged: (value) {
                 setState(() {

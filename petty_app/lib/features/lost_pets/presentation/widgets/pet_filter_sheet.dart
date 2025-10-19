@@ -108,6 +108,17 @@ class PetFilterSheet extends ConsumerWidget {
                             },
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilterChip(
+                            selected: filter.gender == 'unsure',
+                            label: const Text('Unsure'),
+                            onSelected: (selected) {
+                              filterNotifier.setGenderFilter(
+                                  selected ? 'unsure' : null);
+                            },
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
