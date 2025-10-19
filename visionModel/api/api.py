@@ -264,7 +264,6 @@ async def submit_lost_pet(
             latitude=request.latitude,
             longitude=request.longitude,
             timestamp=request.timestamp,
-            neutered=None,
             gender=request.gender if request.gender != 'unsure' else None,
             embeddings=embeddings
         )
@@ -278,7 +277,6 @@ async def submit_lost_pet(
                 latitude=p['latitude'],
                 longitude=p['longitude'],
                 timestamp=p['timestamp'],
-                neutered=None,
                 gender=p.get('gender'),
                 embeddings=p['embeddings']
             )
@@ -392,7 +390,6 @@ async def submit_found_pet(
             latitude=request.latitude,
             longitude=request.longitude,
             timestamp=request.timestamp,
-            neutered=None,
             gender=request.gender if request.gender != 'unsure' else None,
             embeddings=embeddings
         )
@@ -406,7 +403,6 @@ async def submit_found_pet(
                 latitude=p['latitude'],
                 longitude=p['longitude'],
                 timestamp=p['timestamp'],
-                neutered=None,
                 gender=p.get('gender'),
                 embeddings=p['embeddings']
             )

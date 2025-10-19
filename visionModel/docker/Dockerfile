@@ -21,8 +21,12 @@ RUN pip install --no-cache-dir --default-timeout=1000 \
     torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
 
-# Copy models FIRST (before Python code)
-COPY models_cache/ /app/models_cache/
+# Create models cache directory structure
+RUN mkdir -p /app/models_cache
+
+# Copy only required models (excludes unused MegaDescriptor)
+COPY models_cache/yolov8x-seg.pt /app/models_cache/
+COPY models_cache/models--facebook--dinov2-large/ /app/models_cache/models--facebook--dinov2-large/
 
 # Copy ALL necessary Python files to app root (so imports work)
 COPY pet_matching_engine.py .

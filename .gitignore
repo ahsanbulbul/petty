@@ -1,4 +1,4 @@
-/.vscode
+**.vscode
 *.cc
 *.cc
 *.h
@@ -34,6 +34,6 @@ petty_app/linux/flutter/generated_plugins.cmake
 petty_app/linux/flutter/generated_plugin_registrant.h
 **/.venv
 **/models_cache
-**/*.jpg
+visionModel/images
 **/__pycache__
 petty_app/android/app/src/main/AndroidManifest.xml

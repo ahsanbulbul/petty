@@ -28,11 +28,10 @@ class PetPost:
     """
     id: str
     pet_type: str  # 'cat' or 'dog'
-    # description: Optional[str]  # Special markings, patterns, etc.
+    description: Optional[str]  # Special markings, patterns, etc.
     latitude: float
     longitude: float
     timestamp: datetime
-    # neutered: Optional[bool]
     gender: Optional[str]  # 'male', 'female', or 'unsure'    
     # Precomputed embeddings (loaded from database)
     embeddings: List[np.ndarray]  # DINOv2 embeddings (already computed)
@@ -151,10 +150,15 @@ class PetMatcher:
     
     def compute_visual_similarity(self, embeddings1: List[np.ndarray], 
                                  embeddings2: List[np.ndarray],
-                                 aggregation: str = 'max') -> float:
+                                 aggregation: str = 'max') -> Tuple[float, float]:
         """
-        Compute visual similarity between two sets of embeddings
+        Compute SYMMETRIC visual similarity between two sets of embeddings
         Uses multi-image approach for robustness
+        
+        IMPORTANT: Returns bidirectional similarities to ensure symmetric matching
+        - forward_sim: Best match when embeddings1 queries embeddings2
+        - backward_sim: Best match when embeddings2 queries embeddings1
+        - final_sim: Average of both directions for symmetric score
         
         Args:
             embeddings1: List of embeddings from first pet
@@ -162,7 +166,7 @@ class PetMatcher:
             aggregation: How to combine multiple comparisons ('max', 'mean', 'top2_mean')
             
         Returns:
-            Similarity score (0-1)
+            Tuple of (forward_similarity, backward_similarity, symmetric_similarity)
         """
         similarities = []
         
@@ -173,18 +177,65 @@ class PetMatcher:
                 similarities.append(float(sim))
         
         if not similarities:
-            return 0.0
+            return 0.0, 0.0, 0.0
         
-        # Aggregate multiple similarities
+        # For symmetric matching, we need to consider both directions
+        # because multi-image matching can be asymmetric
+        
         if aggregation == 'max':
-            return max(similarities)
+            # Find best match for each image in set 1
+            forward_scores = []
+            for emb1 in embeddings1:
+                best_for_this_image = max([
+                    np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
+                    for emb2 in embeddings2
+                ])
+                forward_scores.append(best_for_this_image)
+            
+            # Find best match for each image in set 2
+            backward_scores = []
+            for emb2 in embeddings2:
+                best_for_this_image = max([
+                    np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
+                    for emb1 in embeddings1
+                ])
+                backward_scores.append(best_for_this_image)
+            
+            # Use average of best matches in each direction
+            forward_sim = np.mean(forward_scores)
+            backward_sim = np.mean(backward_scores)
+            symmetric_sim = (forward_sim + backward_sim) / 2.0
+            
+            return float(symmetric_sim)
+            
         elif aggregation == 'mean':
             return np.mean(similarities)
         elif aggregation == 'top2_mean':
             top_scores = sorted(similarities, reverse=True)[:2]
             return np.mean(top_scores)
         else:
-            return max(similarities)
+            # Default to symmetric max
+            forward_scores = []
+            for emb1 in embeddings1:
+                best_for_this_image = max([
+                    np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
+                    for emb2 in embeddings2
+                ])
+                forward_scores.append(best_for_this_image)
+            
+            backward_scores = []
+            for emb2 in embeddings2:
+                best_for_this_image = max([
+                    np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
+                    for emb1 in embeddings1
+                ])
+                backward_scores.append(best_for_this_image)
+            
+            forward_sim = np.mean(forward_scores)
+            backward_sim = np.mean(backward_scores)
+            symmetric_sim = (forward_sim + backward_sim) / 2.0
+            
+            return float(symmetric_sim)
     
     def score_visual_component(self, visual_sim: float) -> float:
         """
@@ -347,7 +398,7 @@ class PetMatcher:
             return self._create_no_match_result(query_post, candidate_post,
                                                reason="Missing embeddings")
         
-        # 1. Visual Similarity (50% weight)
+        # 1. Visual Similarity (50% weight) - SYMMETRIC
         visual_sim = self.compute_visual_similarity(
             query_post.embeddings,
             candidate_post.embeddings,
