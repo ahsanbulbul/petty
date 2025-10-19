@@ -34,19 +34,19 @@ class _HomePageState extends State<HomePage> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.add_location),
-            label: 'Add Ping',
+            icon: Icon(Icons.report),
+            label: 'Report',
           ),
           NavigationDestination(
             icon: Icon(Icons.map),
             label: 'Map',
           ),
           NavigationDestination(
-            icon: Icon(Icons.pets),
-            label: 'My Pings',
+            icon: Icon(Icons.article),
+            label: 'My Posts',
           ),
           NavigationDestination(
-            icon: Icon(Icons.compare),
+            icon: Icon(Icons.compare_arrows),
             label: 'Matches',
           ),
         ],

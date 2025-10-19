@@ -98,7 +98,7 @@ class _MyPingsScreenState extends ConsumerState<MyPingsScreen> {
                 onPressed: () => Navigator.of(context).maybePop(),
               )
             : null,
-  title: const Text('My Posts'),
+        title: const Text('My Posts'),
         centerTitle: true,
       ),
       body: _isLoading
