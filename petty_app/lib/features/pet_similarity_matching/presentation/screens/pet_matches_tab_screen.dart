@@ -8,13 +8,22 @@ class PetMatchesTabScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final matches = ref.watch(petMatchesProvider);
+  final matches = ref.watch(petMatchesProvider);
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Pet Matches'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh Matches',
+              onPressed: () {
+                ref.invalidate(petMatchesProvider);
+              },
+            ),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Lost Pet Matches'),
