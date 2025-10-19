@@ -2,7 +2,7 @@
 
 AI-powered REST API for matching lost and found pets using computer vision.
 
-## � Authentication
+## Authentication
 
 **All POST/DELETE endpoints require API Key authentication.**
 
@@ -13,7 +13,7 @@ X-API-Key: RXN0ZXIgRWdn
 
 ---
 
-## ��� Quick Start
+## Quick Start
 
 ### 1. Install Dependencies
 
@@ -234,29 +234,19 @@ class PetMatchingConfig:
 
 ## 🚢 Deployment
 
-### Production Deployment
+### Deployment
+from bash:
 ```bash
-# Install production server
-pip install gunicorn
+./start_api.sh
+```
+or using python:
 
-# Run with Gunicorn
-gunicorn api:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+```python
+./start_api.sh
 ```
 
-### Docker Deployment (Coming Soon)
-```dockerfile
-FROM python:3.10-slim
-# GPU support with nvidia-docker
-# See deployment docs
-```
-
-### Environment Variables
-```bash
-# Optional: Configure via .env file
-DATABASE_PATH=pet_matching.db
-MODEL_CACHE_DIR=models_cache
-LOG_LEVEL=INFO
-```
+### Docker Deployment
+See dockerfile
 
 ---
 
@@ -444,14 +434,3 @@ MIT License - See LICENSE file for details
 4. Push to branch
 5. Create Pull Request
 
----
-
-## 📞 Support
-
-For issues and questions:
-- GitHub Issues
-- Email: support@petmatching.com
-
----
-
-**Built with ❤️ for reuniting lost pets with their families**

@@ -28,13 +28,12 @@ class PetPost:
     """
     id: str
     pet_type: str  # 'cat' or 'dog'
-    description: Optional[str]  # Special markings, patterns, etc.
+    # description: Optional[str]  # Special markings, patterns, etc.
     latitude: float
     longitude: float
     timestamp: datetime
-    neutered: Optional[bool]
-    gender: Optional[str]  # 'male', 'female', or None
-    
+    # neutered: Optional[bool]
+    gender: Optional[str]  # 'male', 'female', or 'unsure'    
     # Precomputed embeddings (loaded from database)
     embeddings: List[np.ndarray]  # DINOv2 embeddings (already computed)
 
@@ -197,6 +196,7 @@ class PetMatcher:
         Returns:
             Normalized score (0-100)
         """
+        # Common piecewise linear mapping
         # DINOv2 typically gives 0.65-0.85 for matches
         # Map this range to higher scores
         
