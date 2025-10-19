@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/map_screen.dart';
 import 'ping_test_screen.dart';
 import '../screens/my_pings_screen.dart';
+import '../../../pet_similarity_matching/presentation/screens/pet_matches_tab_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,6 +18,7 @@ class _HomePageState extends State<HomePage> {
     const PingTestScreen(),
     const MapScreen(),
     const MyPingsScreen(),
+    const PetMatchesTabScreen(),
   ];
 
   @override
@@ -42,6 +44,10 @@ class _HomePageState extends State<HomePage> {
           NavigationDestination(
             icon: Icon(Icons.pets),
             label: 'My Pings',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.compare),
+            label: 'Matches',
           ),
         ],
       ),
