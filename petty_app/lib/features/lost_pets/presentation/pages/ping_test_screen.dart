@@ -189,7 +189,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pet Ping Test'),
+  title: const Text('Report Lost or Found'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

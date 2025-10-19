@@ -8,59 +8,39 @@ class PetMatchesTabScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final matches = ref.watch(petMatchesProvider);
+  final matches = ref.watch(petMatchesProvider);
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Pet Matches'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Lost Pet Matches'),
-              Tab(text: 'Found Pet Matches'),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Pet Matches'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Matches',
+            onPressed: () {
+              ref.invalidate(petMatchesProvider);
+            },
           ),
+        ],
+      ),
+      body: matches.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(
+          child: Text('Error loading matches: $error'),
         ),
-        body: matches.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(
-            child: Text('Error loading matches: $error'),
-          ),
-          data: (data) {
-            // Show best_match for each ping as the post card
-            final lostMatches = data.where((m) => !m.isResolved && m.isMatch).toList();
-            final foundMatches = data.where((m) => !m.isResolved && !m.isMatch).toList();
-
-            return TabBarView(
-              children: [
-                // Lost Pet Matches (best_match only)
-                lostMatches.isEmpty
-                    ? const Center(child: Text('No matches found for lost pets'))
-                    : ListView.builder(
-                        itemCount: lostMatches.length,
-                        padding: const EdgeInsets.all(16),
-                        itemBuilder: (context, index) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: MatchCard(match: lostMatches[index]),
-                        ),
-                      ),
-
-                // Found Pet Matches (best_match only)
-                foundMatches.isEmpty
-                    ? const Center(child: Text('No matches found for found pets'))
-                    : ListView.builder(
-                        itemCount: foundMatches.length,
-                        padding: const EdgeInsets.all(16),
-                        itemBuilder: (context, index) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: MatchCard(match: foundMatches[index]),
-                        ),
-                      ),
-              ],
-            );
-          },
-        ),
+        data: (data) {
+          final visibleMatches = data.where((m) => !m.isResolved).toList();
+          return visibleMatches.isEmpty
+              ? const Center(child: Text('No matches found'))
+              : ListView.builder(
+                  itemCount: visibleMatches.length,
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: MatchCard(match: visibleMatches[index]),
+                  ),
+                );
+        },
       ),
     );
   }
