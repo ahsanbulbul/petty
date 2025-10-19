@@ -189,7 +189,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pet Ping Test'),
+        title: const Text('Report Lost or Found'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -271,7 +271,7 @@ class _PingTestScreenState extends ConsumerState<PingTestScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _contactInfoController,
-              decoration: const InputDecoration(labelText: 'Contact Information (Optional)'),
+              decoration: const InputDecoration(labelText: 'Contact Information'),
             ),
             const SizedBox(height: 16),
             // Image picker section

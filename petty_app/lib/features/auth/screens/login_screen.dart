@@ -5,11 +5,9 @@ import '../widgets/custom_button.dart';
 import '../widgets/login_panda_animation.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
-// import 'home_screen.dart';
 import 'forgot_password_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '/features/auth/screens/home_screen.dart';
-
+import 'feature_selection_screen.dart'; // CHANGED: Import FeatureSelectionScreen instead of HomeScreen
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,14 +27,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
 
-    // Panda reacts to password focus
     _passwordFocus.addListener(() {
       final panda = _pandaKey.currentState;
       if (panda == null || !panda.isReady) return;
       panda.handsUp(_passwordFocus.hasFocus);
     });
 
-    // Panda reacts to email typing
     emailController.addListener(() {
       final panda = _pandaKey.currentState;
       if (panda == null || !panda.isReady) return;
@@ -50,13 +46,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!_emailFocus.hasFocus) panda.stopChecking();
     });
 
-    // Supabase auth listener
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
       if (session != null && mounted) {
+        // CHANGED: Navigate to FeatureSelectionScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const FeatureSelectionScreen()),
         );
       }
     });
@@ -76,9 +72,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         panda.showSuccess();
         await Future.delayed(const Duration(milliseconds: 800));
         if (!mounted) return;
+        // CHANGED: Navigate to FeatureSelectionScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const FeatureSelectionScreen()),
         );
       } else {
         panda.showFail();
@@ -147,7 +144,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // Open password reset flow
                             Navigator.push(
                               context,
                               MaterialPageRoute(

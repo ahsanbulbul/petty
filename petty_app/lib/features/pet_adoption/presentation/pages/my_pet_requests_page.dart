@@ -10,13 +10,8 @@ class MyPetRequestsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final receivedAsync = ref.watch(myReceivedRequestsWithDetailsProvider);
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Requests for My Pets'),
-        centerTitle: true,
-        backgroundColor: Colors.teal,
-      ),
       body: receivedAsync.when(
         data: (reqs) {
           if (reqs.isEmpty) {
@@ -42,25 +37,24 @@ class MyPetRequestsPage extends ConsumerWidget {
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: reqs.length,
             itemBuilder: (context, index) {
               final req = reqs[index];
-              
+
               final petName = req.petName;
               final petImageUrl = req.petImageUrl;
               final petImagePath = req.petImagePath;
               final requesterName = req.requesterName;
               final status = req.status;
               final message = req.message ?? '';
-              final createdAt = req.createdAt;
-              
+
               Color statusColor;
               IconData statusIcon;
               String statusText;
-              
+
               switch (status.toLowerCase()) {
                 case 'approved':
                   statusColor = Colors.green;
@@ -77,14 +71,30 @@ class MyPetRequestsPage extends ConsumerWidget {
                   statusIcon = Icons.schedule;
                   statusText = 'Pending';
               }
-              
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
-                elevation: 2,
+                elevation: 4,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Padding(
+                shadowColor: Colors.cyan.withOpacity(0.2),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [Colors.cyan[100]!, Colors.cyan[400]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.cyan.withOpacity(0.15),
+                        offset: const Offset(0, 4),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,11 +102,10 @@ class MyPetRequestsPage extends ConsumerWidget {
                       Row(
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                             child: _buildPetImage(petImageUrl, petImagePath, ref),
                           ),
                           const SizedBox(width: 16),
-                          
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,6 +115,7 @@ class MyPetRequestsPage extends ConsumerWidget {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -122,27 +132,9 @@ class MyPetRequestsPage extends ConsumerWidget {
                                         'From: $requesterName',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: Colors.grey[700],
+                                          color: Colors.grey[800],
                                         ),
                                         overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.access_time,
-                                      size: 16,
-                                      color: Colors.grey[600],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _formatDate(createdAt),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
                                       ),
                                     ),
                                   ],
@@ -152,15 +144,14 @@ class MyPetRequestsPage extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      
                       if (message.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue[100]!),
+                            color: Colors.cyan[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.cyan[100]!),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +161,7 @@ class MyPetRequestsPage extends ConsumerWidget {
                                   Icon(
                                     Icons.message_outlined,
                                     size: 16,
-                                    color: Colors.blue[700],
+                                    color: Colors.cyan[700],
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -178,7 +169,7 @@ class MyPetRequestsPage extends ConsumerWidget {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.blue[700],
+                                      color: Colors.cyan[700],
                                     ),
                                   ),
                                 ],
@@ -195,70 +186,38 @@ class MyPetRequestsPage extends ConsumerWidget {
                           ),
                         ),
                       ],
-                      
                       const SizedBox(height: 12),
                       const Divider(height: 1),
                       const SizedBox(height: 12),
-                      
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: statusColor.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  statusIcon,
-                                  size: 16,
-                                  color: statusColor,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  statusText,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: statusColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildStatusBadge(statusIcon, statusText, statusColor),
                           const Spacer(),
-                          
-                          // Action buttons for pending requests
                           if (status.toLowerCase() == 'pending') ...[
-                            TextButton.icon(
+                            TextButton(
                               onPressed: () async {
                                 await _handleReject(context, ref, req.id);
                               },
-                              icon: const Icon(Icons.close, size: 18),
-                              label: const Text('Reject'),
                               style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                minimumSize: const Size(70, 36),
+                                textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                                 foregroundColor: Colors.red,
                               ),
+                              child: const Text('Reject'),
                             ),
                             const SizedBox(width: 8),
-                            ElevatedButton.icon(
+                            ElevatedButton(
                               onPressed: () async {
                                 await _handleApprove(context, ref, req.id, req.petId);
                               },
-                              icon: const Icon(Icons.check, size: 18),
-                              label: const Text('Approve'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.green[700],
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                minimumSize: const Size(70, 36),
+                                textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                               ),
+                              child: const Text('Approve'),
                             ),
                           ],
                         ],
@@ -297,9 +256,7 @@ class MyPetRequestsPage extends ConsumerWidget {
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
               ),
             ],
           ),
@@ -307,12 +264,10 @@ class MyPetRequestsPage extends ConsumerWidget {
       ),
     );
   }
-  
+
   Widget _buildPetImage(String? imageUrl, String? imagePath, WidgetRef ref) {
-    // Try imageUrl first
     if (imageUrl != null && imageUrl.isNotEmpty) {
       try {
-        // Check if it's base64
         final bytes = base64Decode(imageUrl);
         return Image.memory(
           bytes,
@@ -321,7 +276,6 @@ class MyPetRequestsPage extends ConsumerWidget {
           fit: BoxFit.cover,
         );
       } catch (e) {
-        // Not base64, try as URL
         return Image.network(
           imageUrl,
           width: 80,
@@ -333,8 +287,6 @@ class MyPetRequestsPage extends ConsumerWidget {
         );
       }
     }
-    
-    // Try imagePath
     if (imagePath != null && imagePath.isNotEmpty) {
       final repo = ref.read(petAdoptionRepositoryProvider);
       final publicUrl = repo.getPublicImageUrl(imagePath);
@@ -348,10 +300,9 @@ class MyPetRequestsPage extends ConsumerWidget {
         },
       );
     }
-    
     return _buildPlaceholderImage();
   }
-  
+
   Widget _buildPlaceholderImage() {
     return Container(
       width: 80,
@@ -367,32 +318,56 @@ class MyPetRequestsPage extends ConsumerWidget {
       ),
     );
   }
-  
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return '${difference.inMinutes}m ago';
-      }
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+
+  Widget _buildStatusBadge(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: color == Colors.green
+              ? [Colors.green[400]!, Colors.green[600]!]
+              : color == Colors.red
+                  ? [Colors.red[400]!, Colors.red[600]!]
+                  : [Colors.orange[300]!, Colors.orange[500]!],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: (color == Colors.green
+                    ? Colors.green[600]
+                    : color == Colors.red
+                        ? Colors.red[600]
+                        : Colors.orange[500])!
+                .withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
-  
+
   Future<void> _handleApprove(
     BuildContext context,
     WidgetRef ref,
     String requestId,
     String petId,
   ) async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -400,6 +375,7 @@ class MyPetRequestsPage extends ConsumerWidget {
         content: const Text(
           'Are you sure you want to approve this adoption request? This will mark the pet as adopted.',
         ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -415,22 +391,14 @@ class MyPetRequestsPage extends ConsumerWidget {
         ],
       ),
     );
-
     if (confirmed != true) return;
 
     try {
       final repo = ref.read(petAdoptionRepositoryProvider);
-      
-      // Update request status
       await repo.updateRequestStatus(requestId, 'approved');
-      
-      // Mark pet as adopted
       await repo.markPetAdopted(petId);
-      
-      // Refresh the list
       ref.invalidate(myReceivedRequestsWithDetailsProvider);
       ref.invalidate(petListProvider);
-      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -451,18 +419,18 @@ class MyPetRequestsPage extends ConsumerWidget {
       }
     }
   }
-  
+
   Future<void> _handleReject(
     BuildContext context,
     WidgetRef ref,
     String requestId,
   ) async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Reject Request'),
         content: const Text('Are you sure you want to reject this adoption request?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -478,16 +446,12 @@ class MyPetRequestsPage extends ConsumerWidget {
         ],
       ),
     );
-
     if (confirmed != true) return;
 
     try {
       final repo = ref.read(petAdoptionRepositoryProvider);
       await repo.updateRequestStatus(requestId, 'rejected');
-      
-      // Refresh the list
       ref.invalidate(myReceivedRequestsWithDetailsProvider);
-      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

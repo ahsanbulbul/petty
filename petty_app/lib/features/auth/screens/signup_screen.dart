@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:petty_app/features/auth/screens/feature_selection_screen.dart';
 import '../widgets/custom_textfield.dart';
 import '../widgets/custom_button.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
+
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -64,7 +66,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Account created! Please check your email to verify your account."),
+            content: Text("Account created!"),
             duration: Duration(seconds: 5),
             backgroundColor: Colors.green,
           ),
@@ -75,7 +77,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(builder: (_) => const FeatureSelectionScreen()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

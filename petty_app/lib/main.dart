@@ -1,32 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:petty_app/features/auth/screens/splash_screen.dart';
+import 'package:petty_app/features/auth/screens/login_screen.dart';
+import 'package:petty_app/features/auth/screens/feature_selection_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 
-// 🧩 Auth screens
-import 'features/auth/screens/login_screen.dart';
-import 'features/auth/screens/home_screen.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/auth/screens/reset_password_screen.dart';
 
-// 🎨 Theme setup
-import 'core/theme/app_theme.dart';
-
-// 🐾 Pet Adoption feature routes
-import 'features/pet_adoption/presentation/pages/pet_adoption_home_page.dart';
-import 'features/pet_adoption/presentation/pages/add_pet_screen.dart';
-import 'features/pet_adoption/presentation/pages/adoption_requests_page.dart';
-import 'features/pet_adoption/presentation/pages/my_pet_requests_page.dart';
-
-// 🌟 ThemeMode provider
-final themeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
+// Create a global navigator key
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
     url: 'https://pmxyeihahwudrrgczkou.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteHllaWhhaHd1ZHJyZ2N6a291Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3MzEzNTUsImV4cCI6MjA3NTMwNzM1NX0.5BC6IcPLY7rAr2cFAG4T-vBkXU7sYXo5lg8xIubSjkw',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteHllaWhhaHd1ZHJyZ2N6a291Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3MzEzNTUsImV4cCI6MjA3NTMwNzM1NX0.5BC6IcPLY7rAr2cFAG4T-vBkXU7sYXo5lg8xIubSjkw',
   );
 
   runApp(const ProviderScope(child: MyApp()));
@@ -48,7 +40,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.initState();
     _user = Supabase.instance.client.auth.currentUser;
 
-    // Listen for auth state changes
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final session = data.session;
       setState(() {
@@ -56,7 +47,6 @@ class _MyAppState extends ConsumerState<MyApp> {
       });
     });
 
-    // Handle deep links
     _handleInitialDeepLink();
   }
 
@@ -80,45 +70,43 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeProvider);
+    final themeMode = ref.watch(themeNotifierProvider);
 
     return MaterialApp(
+      navigatorKey: navigatorKey, // assign the global key
       debugShowCheckedModeBanner: false,
       title: 'Petty App',
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeMode,
-      home: Builder(
-        builder: (context) {
-          // ✅ Handle deep link navigation
+      home: SplashScreen(
+        onSplashCompleted: () {
+          // Navigate using the global navigator key
           if (_deepLinkToken != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
+            navigatorKey.currentState?.pushReplacement(
+              MaterialPageRoute(
                 builder: (_) => ResetPasswordScreen(
                   accessToken: _deepLinkToken!,
                   onPasswordUpdated: () {
-                    setState(() {
-                      _deepLinkToken = null;
-                    });
-                    Navigator.of(context).pushReplacement(
+                    _deepLinkToken = null;
+                    navigatorKey.currentState?.pushReplacement(
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
                 ),
-              ));
-            });
+              ),
+            );
+          } else if (_user != null) {
+            navigatorKey.currentState?.pushReplacement(
+              MaterialPageRoute(builder: (_) => const FeatureSelectionScreen()),
+            );
+          } else {
+            navigatorKey.currentState?.pushReplacement(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
           }
-
-          // Normal login/home flow
-          return _user == null ? const LoginScreen() : const HomeScreen();
         },
       ),
-      routes: {
-        '/pet_home': (context) => const PetAdoptionHomePage(),
-        '/add_pet': (context) => const AddPetScreen(),
-        '/my_requests': (context) => const AdoptionRequestsPage(),
-        '/my_pet_requests': (context) => const MyPetRequestsPage(),
-      },
     );
   }
 }

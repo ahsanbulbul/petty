@@ -49,3 +49,8 @@ final filteredPetPingsProvider = FutureProvider<List<PetPing>>((ref) async {
     return true;
   }).toList();
 });
+
+final petPingByIdProvider = FutureProvider.family<PetPing?, String>((ref, id) async {
+  final repository = ref.read(petPingRepositoryProvider);
+  return repository.getPetPingById(id);
+});
