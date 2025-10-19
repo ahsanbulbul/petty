@@ -25,23 +25,18 @@ class PetCard extends ConsumerWidget {
         final bytes = base64Decode(pet.imageUrl!);
         imageWidget = Image.memory(
           bytes,
-          height: 120,
-          width: 120,
+          height: 110,
+          width: 110,
           fit: BoxFit.cover,
         );
       } catch (e) {
         imageWidget = Image.network(
           pet.imageUrl!,
-          height: 120,
-          width: 120,
+          height: 110,
+          width: 110,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return Container(
-              height: 120,
-              width: 120,
-              color: Colors.grey[300],
-              child: Icon(Icons.pets, size: 50, color: Colors.grey[600]),
-            );
+            return _buildPlaceholderImage();
           },
         );
       }
@@ -49,25 +44,15 @@ class PetCard extends ConsumerWidget {
       final imageUrl = repo.getPublicImageUrl(pet.imagePath!);
       imageWidget = Image.network(
         imageUrl,
-        height: 120,
-        width: 120,
+        height: 110,
+        width: 110,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          return Container(
-            height: 120,
-            width: 120,
-            color: Colors.grey[300],
-            child: Icon(Icons.pets, size: 50, color: Colors.grey[600]),
-          );
+          return _buildPlaceholderImage();
         },
       );
     } else {
-      imageWidget = Container(
-        height: 120,
-        width: 120,
-        color: Colors.grey[300],
-        child: Icon(Icons.pets, size: 50, color: Colors.grey[600]),
-      );
+      imageWidget = _buildPlaceholderImage();
     }
 
     return Card(
@@ -107,7 +92,11 @@ class PetCard extends ConsumerWidget {
                     tag: pet.id,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: imageWidget,
+                      child: SizedBox(
+                        height: 110,
+                        width: 110,
+                        child: imageWidget,
+                      ),
                     ),
                   ),
                   if (isMyPet)
@@ -141,7 +130,7 @@ class PetCard extends ConsumerWidget {
                     ),
                 ],
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               // Pet Details
               Expanded(
                 child: Column(
@@ -162,15 +151,19 @@ class PetCard extends ConsumerWidget {
                       children: [
                         Icon(Icons.pets, size: 16, color: Colors.green[700]),
                         const SizedBox(width: 4),
-                        Text(
-                          pet.type.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green[700],
+                        Flexible(
+                          child: Text(
+                            pet.type.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green[700],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Icon(Icons.cake, size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
@@ -226,10 +219,10 @@ class PetCard extends ConsumerWidget {
                           ),
                         ),
                         if (pet.location != null && pet.location!.isNotEmpty) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
                           const SizedBox(width: 4),
-                          Expanded(
+                          Flexible(
                             child: Text(
                               pet.location!,
                               style: TextStyle(fontSize: 13, color: Colors.grey[700]),
@@ -243,7 +236,7 @@ class PetCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 18, color: Colors.green[700]),
+              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.green[700]),
             ],
           ),
         ),
@@ -282,6 +275,15 @@ class PetCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Container(
+      height: 110,
+      width: 110,
+      color: Colors.grey[300],
+      child: Icon(Icons.pets, size: 50, color: Colors.grey[600]),
     );
   }
 }

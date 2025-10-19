@@ -62,11 +62,12 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      resizeToAvoidBottomInset: true, // ✅ allows scroll when keyboard is open
+      resizeToAvoidBottomInset: true,
       
       body: GestureDetector(
-        // ✅ tap outside to dismiss keyboard
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -93,7 +94,7 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.teal, width: 2),
                         borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey[100],
+                        color: isDark ? Colors.grey[850] : Colors.grey[100],
                       ),
                       child: _imageBytes != null
                           ? ClipRRect(
@@ -113,7 +114,9 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                                 Text(
                                   'Tap to select pet image',
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
                                     fontSize: 16,
                                   ),
                                 ),
@@ -129,6 +132,9 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: _inputDecoration('Pet Name *', Icons.pets),
+                    style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87),
+                    cursorColor: Colors.teal,
                     validator: (v) =>
                         v!.isEmpty ? 'Please enter pet name' : null,
                   ),
@@ -139,12 +145,20 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _selectedType,
+                          dropdownColor:
+                              isDark ? Colors.grey[900] : Colors.white,
                           decoration:
                               _inputDecoration('Pet Type *', Icons.category),
                           items: _petTypes
                               .map((type) => DropdownMenuItem(
                                     value: type,
-                                    child: Text(type),
+                                    child: Text(
+                                      type,
+                                      style: TextStyle(
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black),
+                                    ),
                                   ))
                               .toList(),
                           onChanged: (v) => setState(() => _selectedType = v),
@@ -161,6 +175,9 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly
                           ],
+                          style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87),
+                          cursorColor: Colors.teal,
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Enter age';
                             if (int.tryParse(v) == null) return 'Invalid';
@@ -176,9 +193,10 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(
+                          color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                       borderRadius: BorderRadius.circular(12),
-                      color: Colors.grey[50],
+                      color: isDark ? Colors.grey[850] : Colors.grey[50],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,6 +232,9 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                       FilteringTextInputFormatter.digitsOnly,
                       LengthLimitingTextInputFormatter(11),
                     ],
+                    style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87),
+                    cursorColor: Colors.teal,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Enter contact number';
                       if (v.length < 11) return 'Enter valid 11-digit number';
@@ -223,12 +244,18 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedLocation,
+                    dropdownColor: isDark ? Colors.grey[900] : Colors.white,
                     decoration:
                         _inputDecoration('Location *', Icons.location_on),
                     items: _locations
                         .map((loc) => DropdownMenuItem(
                               value: loc,
-                              child: Text(loc),
+                              child: Text(
+                                loc,
+                                style: TextStyle(
+                                    color:
+                                        isDark ? Colors.white : Colors.black),
+                              ),
                             ))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedLocation = v),
@@ -245,6 +272,9 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
                     decoration:
                         _inputDecoration('Description (Optional)', Icons.edit),
                     maxLines: 4,
+                    style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87),
+                    cursorColor: Colors.teal,
                   ),
                   const SizedBox(height: 24),
 
@@ -321,14 +351,38 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
   }
 
   InputDecoration _inputDecoration(String label, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon),
+      labelStyle: TextStyle(
+        color: isDark ? Colors.teal[200] : Colors.grey[800],
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: isDark ? Colors.teal[200] : Colors.teal,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(
+          color: isDark ? Colors.teal[300]! : Colors.teal,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(
+          color: isDark ? Colors.tealAccent : Colors.teal,
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
       filled: true,
-      fillColor: Colors.grey[50],
+      fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
+      hintStyle: TextStyle(
+        color: isDark ? Colors.grey[400] : Colors.grey[600],
+      ),
     );
   }
 

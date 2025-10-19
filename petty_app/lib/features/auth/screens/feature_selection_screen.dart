@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../lost_pets/presentation/pages/home_page.dart';
 import '../../pet_adoption/presentation/pages/pet_adoption_menu_page.dart';
-import '../screens/login_screen.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/theme_provider.dart'; // corrected import
+import '../screens/profile_screen.dart';
+import '../../../core/theme/theme_provider.dart';
 
 class FeatureSelectionScreen extends ConsumerStatefulWidget {
   const FeatureSelectionScreen({super.key});
@@ -15,8 +14,7 @@ class FeatureSelectionScreen extends ConsumerStatefulWidget {
       _FeatureSelectionScreenState();
 }
 
-class _FeatureSelectionScreenState
-    extends ConsumerState<FeatureSelectionScreen>
+class _FeatureSelectionScreenState extends ConsumerState<FeatureSelectionScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -35,6 +33,13 @@ class _FeatureSelectionScreenState
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
     _animationController.forward();
+    
+    // Listen to auth state changes for real-time updates
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (mounted) {
+        _loadUserInfo();
+      }
+    });
   }
 
   @override
@@ -51,51 +56,16 @@ class _FeatureSelectionScreenState
         final metadata = user.userMetadata;
         _userName = metadata?['name'] ??
             metadata?['full_name'] ??
-            user.email
-                ?.split('@')[0]
-                .replaceAll('.', ' ')
-                .replaceAll('_', ' ') ??
+            user.email?.split('@')[0].replaceAll('.', ' ').replaceAll('_', ' ') ??
             'User';
       });
     }
   }
 
-  void _logout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await Supabase.instance.client.auth.signOut();
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    // ✅ Correct theme watch
     final themeMode = ref.watch(themeNotifierProvider);
+    final isDark = themeMode == ThemeMode.dark;
 
     return Scaffold(
       body: Container(
@@ -103,11 +73,17 @@ class _FeatureSelectionScreenState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: const [
-              Color(0xFFE0F7FA),
-              Color(0xFFB2EBF2),
-              Color(0xFF80DEEA),
-            ],
+            colors: isDark
+                ? [
+                    const Color(0xFF1A1A2E),
+                    const Color(0xFF16213E),
+                    const Color(0xFF0F3460),
+                  ]
+                : const [
+                    Color(0xFFE0F7FA),
+                    Color(0xFFB2EBF2),
+                    Color(0xFF80DEEA),
+                  ],
           ),
         ),
         child: SafeArea(
@@ -117,73 +93,59 @@ class _FeatureSelectionScreenState
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Header with user info, logout, and theme toggle
+                  // Header with only left CircleAvatar
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 28,
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              _userName[0].toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.cyan[700],
-                              ),
+                      GestureDetector(
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProfileScreen(),
+                            ),
+                          );
+                          // Reload user info if profile was updated
+                          if (result == true) {
+                            _loadUserInfo();
+                          }
+                        },
+                        child: CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            _userName[0].toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.cyan[700],
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome back,',
-                                style: TextStyle(
-                                  color: Colors.cyan[900],
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.5,
-                                child: Text(
-                                  _userName,
-                                  style: TextStyle(
-                                    color: Colors.cyan[900],
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
-                      Row(
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Theme toggle button
-                          IconButton(
-                            onPressed: () {
-                              ref
-                                  .read(themeNotifierProvider.notifier)
-                                  .toggleTheme(); // ✅ call toggleTheme
-                            },
-                            icon: Icon(
-                              Icons.brightness_6,
-                              color: Colors.cyan[900],
+                          Text(
+                            'Welcome back,',
+                            style: TextStyle(
+                              color: isDark ? Colors.cyan[100] : Colors.cyan[900],
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
-                            tooltip: 'Toggle Theme',
                           ),
-                          // Logout button
-                          IconButton(
-                            onPressed: _logout,
-                            icon: Icon(Icons.logout, color: Colors.cyan[900]),
-                            tooltip: 'Logout',
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.6,
+                            child: Text(
+                              _userName,
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.cyan[900],
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -219,7 +181,7 @@ class _FeatureSelectionScreenState
                           style: TextStyle(
                             fontSize: 56,
                             fontWeight: FontWeight.bold,
-                            color: Colors.cyan[900],
+                            color: isDark ? Colors.white : Colors.cyan[900],
                             letterSpacing: 2,
                           ),
                         ),
@@ -228,7 +190,7 @@ class _FeatureSelectionScreenState
                           'Your Pet Care Companion',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.cyan[800],
+                            color: isDark ? Colors.cyan[200] : Colors.cyan[800],
                             letterSpacing: 1,
                             fontWeight: FontWeight.w500,
                           ),
@@ -253,7 +215,8 @@ class _FeatureSelectionScreenState
                         _buildFeatureCard(
                           context: context,
                           title: 'Pet Adoption',
-                          description: 'Find your perfect companion or rehome a pet',
+                          description:
+                              'Find your perfect companion or rehome a pet',
                           icon: Icons.favorite,
                           color: Colors.teal[600]!,
                           onTap: () {

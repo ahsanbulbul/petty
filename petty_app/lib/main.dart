@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:petty_app/features/auth/screens/feature_selection_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:app_links/app_links.dart';
 
@@ -100,7 +101,7 @@ class _MyAppState extends ConsumerState<MyApp> {
             });
           }
 
-          return _user == null ? const LoginScreen() : const HomeScreen();
+          return _user == null ? const LoginScreen() : const FeatureSelectionScreen();
         },
       ),
       routes: {
