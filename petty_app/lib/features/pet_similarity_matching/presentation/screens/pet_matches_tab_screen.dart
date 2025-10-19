@@ -28,12 +28,13 @@ class PetMatchesTabScreen extends ConsumerWidget {
             child: Text('Error loading matches: $error'),
           ),
           data: (data) {
+            // Show best_match for each ping as the post card
             final lostMatches = data.where((m) => !m.isResolved && m.isMatch).toList();
             final foundMatches = data.where((m) => !m.isResolved && !m.isMatch).toList();
 
             return TabBarView(
               children: [
-                // Lost Pet Matches
+                // Lost Pet Matches (best_match only)
                 lostMatches.isEmpty
                     ? const Center(child: Text('No matches found for lost pets'))
                     : ListView.builder(
@@ -45,7 +46,7 @@ class PetMatchesTabScreen extends ConsumerWidget {
                         ),
                       ),
 
-                // Found Pet Matches
+                // Found Pet Matches (best_match only)
                 foundMatches.isEmpty
                     ? const Center(child: Text('No matches found for found pets'))
                     : ListView.builder(

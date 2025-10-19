@@ -49,29 +49,28 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
   @override
   Future<PetMatch?> submitLostPet(PetPing ping) async {
     try {
-      // Convert first image to base64 if available
-      final imageData = ping.images?.isNotEmpty == true 
-          ? base64Encode(ping.images!.first)
-          : null;
-      
+      // Convert all images to base64 array
+      final images = ping.images?.map((img) => base64Encode(img)).toList() ?? [];
+      final payload = {
+        'id': ping.id,
+        'images': images,
+        'location': {
+          'latitude': ping.location.latitude,
+          'longitude': ping.location.longitude,
+        },
+        'timestamp': ping.timestamp.toIso8601String(),
+        'description': ping.description,
+        'petType': ping.petType,
+        'title': ping.title,
+      };
+      print('LostPet API payload: ' + payload.toString());
       final response = await _client.post(
         Uri.parse('${Env.matchServiceUrl}/lost'),
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': Env.matchServiceApiKey,
         },
-        body: jsonEncode({
-          'id': ping.id,
-          'imageData': imageData,
-          'location': {
-            'latitude': ping.location.latitude,
-            'longitude': ping.location.longitude,
-          },
-          'timestamp': ping.timestamp.toIso8601String(),
-          'description': ping.description,
-          'petType': ping.petType,
-          'title': ping.title,
-        }),
+        body: jsonEncode(payload),
       );
 
       print('Lost pet submission response status: ${response.statusCode}');
@@ -93,29 +92,28 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
   @override
   Future<PetMatch?> submitFoundPet(PetPing ping) async {
     try {
-      // Convert first image to base64 if available
-      final imageData = ping.images?.isNotEmpty == true 
-          ? base64Encode(ping.images!.first)
-          : null;
-          
+      // Convert all images to base64 array
+      final images = ping.images?.map((img) => base64Encode(img)).toList() ?? [];
+      final payload = {
+        'id': ping.id,
+        'images': images,
+        'location': {
+          'latitude': ping.location.latitude,
+          'longitude': ping.location.longitude,
+        },
+        'timestamp': ping.timestamp.toIso8601String(),
+        'description': ping.description,
+        'petType': ping.petType,
+        'title': ping.title,
+      };
+      print('FoundPet API payload: ' + payload.toString());
       final response = await _client.post(
         Uri.parse('${Env.matchServiceUrl}/found'),
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': Env.matchServiceApiKey,
         },
-        body: jsonEncode({
-          'id': ping.id,
-          'imageData': imageData,
-          'location': {
-            'latitude': ping.location.latitude,
-            'longitude': ping.location.longitude,
-          },
-          'timestamp': ping.timestamp.toIso8601String(),
-          'description': ping.description,
-          'petType': ping.petType,
-          'title': ping.title,
-        }),
+        body: jsonEncode(payload),
       );
 
       print('Found pet submission response status: ${response.statusCode}');
@@ -196,33 +194,34 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
         return [];
       }
 
-    // Step 1: Get user's pet_ping_ids from user_pet_pings
-    final userPosts = await _supabase
-      .from('user_pet_pings')
-      .select()
-      .eq('user_id', user.id);
+      // Step 1: Get user's pet_ping_ids from user_pet_pings
+      final userPosts = await _supabase
+          .from('user_pet_pings')
+          .select()
+          .eq('user_id', user.id);
 
-    // Step 2: Get all pet_pings that match those ids
-    final petPingIds = userPosts.map((row) => row['pet_ping_id']).toList();
-    final userPings = await _supabase
-      .from('pet_pings')
-      .select()
-      .in_('id', petPingIds)
-      .order('created_at', ascending: false);
+      // Step 2: Get all pet_pings that match those ids
+      final petPingIds = userPosts.map((row) => row['pet_ping_id']).toList();
+      final userPings = await _supabase
+          .from('pet_pings')
+          .select()
+          .in_('id', petPingIds)
+          .order('created_at', ascending: false);
 
       print('Found ${userPings.length} pings for current user');
-      List<PetMatch> allMatches = [];
+      List<PetMatch> bestMatches = [];
 
       // Process each ping
       for (final ping in userPings) {
-  print('Raw location value for ping ${ping['id']}: ${ping['location']}');
+        print('Ping keys: ${ping.keys}');
+        print('Raw location value for ping ${ping['id']}: ${ping['location']}');
         final endpoint = ping['is_lost'] == true ? '/lost' : '/found';
         print('Processing ${ping['is_lost'] ? 'lost' : 'found'} pet ping: ${ping['id']}');
 
-        // Convert image to base64 if available
-        final imageBase64 = ping['images'] != null && (ping['images'] as List).isNotEmpty
-            ? ping['images'][0].toString()
-            : null;
+        // Convert all images to base64 array if available
+        final images = ping['images'] != null
+            ? (ping['images'] as List).map((img) => img.toString()).toList()
+            : [];
 
         // Use robust location parsing utility
         final locParsed = parseLocation(ping['location']);
@@ -230,37 +229,37 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
         final longitude = locParsed['longitude'];
 
         try {
+          final payload = {
+            'id': ping['id'],
+            'pet_type': ping['pet_type'],
+            'latitude': latitude,
+            'longitude': longitude,
+            'timestamp': ping['created_at'],
+            'images': images,
+            'gender': ping['gender'] ?? 'unknown',
+            'description': ping['description'],
+            'title': ping['title'],
+          };
+          print('Match API payload: ' + payload.toString());
           final response = await _client.post(
             Uri.parse('${Env.matchServiceUrl}$endpoint'),
             headers: {
               'Content-Type': 'application/json',
               'X-API-Key': Env.matchServiceApiKey,
             },
-            body: jsonEncode({
-              'id': ping['id'],
-              'pet_type': ping['pet_type'],
-              'latitude': latitude,
-              'longitude': longitude,
-              'timestamp': ping['created_at'],
-              'imageData': imageBase64,
-              'gender': ping['gender'] ?? 'unknown',
-              'description': ping['description'],
-              'title': ping['title'],
-            }),
+            body: jsonEncode(payload),
           );
 
           print('Match response for ${ping['id']} status: ${response.statusCode}');
           print('Match response body: ${response.body}');
-          
+
           if (response.statusCode == 200) {
             final data = jsonDecode(response.body);
-            if (data != null) {
-              if (data is List) {
-                allMatches.addAll(
-                  data.map((item) => PetMatch.fromJson(Map<String, dynamic>.from(item))).toList()
-                );
-              } else if (data is Map<String, dynamic>) {
-                allMatches.add(PetMatch.fromJson(data));
+            if (data != null && data is Map<String, dynamic> && data['best_match'] != null) {
+              try {
+                bestMatches.add(PetMatch.fromJson(data['best_match']));
+              } catch (e) {
+                print('Error parsing best_match for ping ${ping['id']}: $e');
               }
             }
           }
@@ -271,8 +270,8 @@ class PetMatchingRepositoryImpl implements PetMatchingRepository {
         }
       }
 
-      print('Found ${allMatches.length} total matches');
-      return allMatches;
+      print('Found ${bestMatches.length} best matches');
+      return bestMatches;
     } catch (e, stackTrace) {
       print('Error getting matches: $e');
       print('Stack trace: $stackTrace');

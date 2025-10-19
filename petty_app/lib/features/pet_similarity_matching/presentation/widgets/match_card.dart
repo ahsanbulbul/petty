@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/pet_match.dart';
 import '../providers/pet_matches_provider.dart';
+import '../../../lost_pets/presentation/providers/pet_ping_providers.dart';
+import '../../../lost_pets/presentation/screens/pet_detail_screen.dart';
 
 class MatchCard extends ConsumerWidget {
   final PetMatch match;
@@ -26,16 +28,55 @@ class MatchCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final confidenceCategory = match.matchCategory;
-    final confidenceColor = _getConfidenceColor(match.matchCategory);
+  final confidenceCategory = match.matchCategory[0].toUpperCase() + match.matchCategory.substring(1).toLowerCase();
+  final confidenceColor = _getConfidenceColor(match.matchCategory);
 
-    return Card(
+  return Card(
       elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    // Fetch the user's own post (queryId) and navigate
+                    final petAsync = await ref.read(petPingByIdProvider(match.queryId).future);
+                    if (petAsync != null && context.mounted) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => PetDetailScreen(pet: petAsync),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.pets),
+                  label: const Text('Post'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    // Fetch the best match post (matchedId) and navigate
+                    final petAsync = await ref.read(petPingByIdProvider(match.matchedId).future);
+                    if (petAsync != null && context.mounted) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => PetDetailScreen(pet: petAsync),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.star),
+                  label: const Text('Best Match'),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
             // Header with confidence level
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -49,7 +90,7 @@ class MatchCard extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  '${(match.confidence * 100).toInt()}%',
+                  '${match.confidence.toStringAsFixed(2)}%',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -79,57 +120,6 @@ class MatchCard extends ConsumerWidget {
               match.details.timeScore,
               Icons.access_time,
             ),
-
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-
-            // Action buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Navigate to detail screen when implemented
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Match Details'),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Pet Type: ${match.petType}'),
-                            Text('Distance: ${match.details.distanceKm.toStringAsFixed(1)} km'),
-                            Text('Time Difference: ${match.details.timeDiffHours.toStringAsFixed(1)} hours'),
-                            Text('Metadata Score: ${(match.details.metadataScore * 100).toInt()}%'),
-                          ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Close'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.visibility),
-                  label: const Text('View Details'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    ref.read(petMatchesStateProvider.notifier).markAsResolved(match.id);
-                  },
-                  icon: const Icon(Icons.check_circle),
-                  label: const Text('Mark Resolved'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -137,22 +127,34 @@ class MatchCard extends ConsumerWidget {
   }
 
   Widget _buildDetailRow(String label, double score, IconData icon) {
+    String valueText;
+    double displayValue;
+    if (label == 'Visual Similarity') {
+      displayValue = score * 100;
+      valueText = '${displayValue.toStringAsFixed(1)}%';
+    } else {
+      displayValue = score;
+      valueText = '${displayValue.round()}%';
+    }
     return Row(
       children: [
         Icon(icon, size: 20),
         const SizedBox(width: 8),
         Text(label),
         const Spacer(),
-        LinearProgressIndicator(
-          value: score,
-          backgroundColor: Colors.grey[200],
-          valueColor: AlwaysStoppedAnimation(
-            _getConfidenceColor(score >= 0.8 ? 'high' : score >= 0.5 ? 'medium' : 'low'),
+        SizedBox(
+          width: 120,
+          child: LinearProgressIndicator(
+            value: label == 'Visual Similarity' ? score / 1.0 : score / 100.0,
+            backgroundColor: Colors.grey[200],
+            valueColor: AlwaysStoppedAnimation(
+              _getConfidenceColor((label == 'Visual Similarity' ? score : score / 100.0) >= 0.8 ? 'high' : (label == 'Visual Similarity' ? score : score / 100.0) >= 0.5 ? 'medium' : 'low'),
+            ),
+            minHeight: 8,
           ),
-          minHeight: 8,
         ),
         const SizedBox(width: 8),
-        Text('${(score * 100).toInt()}%'),
+        Text(valueText),
       ],
     );
   }
