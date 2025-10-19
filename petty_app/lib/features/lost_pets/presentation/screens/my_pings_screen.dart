@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/pet_ping.dart';
-import '../widgets/pet_marker.dart';
 import '../screens/pet_detail_screen.dart';
 import '../../data/repositories/supabase_pet_ping_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -91,42 +90,51 @@ class _MyPingsScreenState extends ConsumerState<MyPingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null) {
-      return Center(child: Text(_error!));
-    }
-    if (_myPings.isEmpty) {
-      return const Center(child: Text('No pings posted yet.'));
-    }
-    return ListView.builder(
-      itemCount: _myPings.length,
-      itemBuilder: (context, index) {
-        final ping = _myPings[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            leading: Icon(
-              Icons.pets,
-              color: ping.isLost ? Colors.red : Colors.green,
-              size: 30,
-            ),
-            title: Text(ping.title),
-            subtitle: Text(ping.isLost ? 'Lost' : 'Found'),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _deletePing(ping),
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PetDetailScreen(pet: ping)),
-              );
-            },
-          ),
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).maybePop(),
+              )
+            : null,
+  title: const Text('My Posts'),
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text(_error!))
+              : _myPings.isEmpty
+                  ? const Center(child: Text('No pings posted yet.'))
+                  : ListView.builder(
+                      itemCount: _myPings.length,
+                      itemBuilder: (context, index) {
+                        final ping = _myPings[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.pets,
+                              color: ping.isLost ? Colors.red : Colors.green,
+                              size: 30,
+                            ),
+                            title: Text(ping.title),
+                            subtitle: Text(ping.isLost ? 'Lost' : 'Found'),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deletePing(ping),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => PetDetailScreen(pet: ping)),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
     );
   }
 }
